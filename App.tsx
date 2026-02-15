@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import './App.css'; // Ensure you have basic styles or delete this line if using Tailwind
+
+// REMOVED the broken import link.
+// All styles are now safely inside this file.
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
