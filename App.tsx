@@ -83,3 +83,81 @@ const App = () => {
           <div className="space-y-2">
             <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] px-4">Phase 2: Roots</div>
             <NavItem icon={ClipboardList} label="Inventory Prep" view="inventory" active={currentView === 'inventory'} />
+          </div>
+        </nav>
+
+        <div className="pt-8 border-t border-slate-100 space-y-2">
+          <NavItem icon={Settings} label="App Settings" view="settings" locked={true} />
+          <button onClick={() => setCurrentView('login')} className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-50 font-bold transition-all">
+            <LogOut size={20} />
+            <span>Logout and Lock</span>
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 p-16 overflow-y-auto">
+        {currentView === 'dashboard' ? (
+          <div className="max-w-5xl mx-auto space-y-16">
+            <header className="space-y-6">
+              <h1 className="text-[8rem] font-light text-slate-900 leading-[0.9] serif-font -ml-2 tracking-tighter">Welcome Home.</h1>
+              <p className="text-2xl text-slate-400 font-medium max-w-2xl leading-relaxed">A guided path to walk out the freedom Christ has for you.</p>
+            </header>
+            <div className="bg-white p-12 rounded-[3rem] border border-slate-100 shadow-sm flex items-center justify-between">
+               <div className="space-y-1">
+                  <h3 className="text-slate-400 uppercase tracking-widest text-xs font-black">Active Journey</h3>
+                  <p className="text-4xl font-bold text-slate-900">You have <span className="text-indigo-600">{issues.length}</span> items logged.</p>
+               </div>
+               <button onClick={() => setCurrentView('tracker')} className="px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-xl">Open Tracker</button>
+            </div>
+          </div>
+        ) : currentView === 'tracker' ? (
+          <div className="max-w-4xl mx-auto space-y-12">
+            <header className="flex items-end justify-between border-b border-slate-200 pb-10">
+              <div className="space-y-2">
+                <h2 className="text-5xl font-light text-slate-900 serif-font">Issue Tracker</h2>
+                <p className="text-slate-400 font-medium">Be honest and specific. What are you feeling right now?</p>
+              </div>
+            </header>
+            <div className="bg-white p-10 rounded-[2.5rem] border border-indigo-50 shadow-sm space-y-6">
+              <div className="flex items-center space-x-4">
+                <select 
+                  value={newIssue.category}
+                  onChange={(e) => setNewIssue({...newIssue, category: e.target.value})}
+                  className="px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 outline-none"
+                >
+                  <option>Emotional</option><option>Physical</option><option>Relational</option><option>Spiritual</option>
+                </select>
+                <input 
+                  type="text" placeholder="Describe the symptom..."
+                  value={newIssue.description}
+                  onChange={(e) => setNewIssue({...newIssue, description: e.target.value})}
+                  className="flex-1 px-6 py-4 bg-slate-50 border-none rounded-2xl font-medium outline-none"
+                />
+                <button onClick={addIssue} className="p-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all"><Plus size={28} /></button>
+              </div>
+            </div>
+            <div className="space-y-6">
+              {issues.map(issue => (
+                <div key={issue.id} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-all">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">{issue.category}</span>
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">{issue.description}</p>
+                  </div>
+                  <button onClick={() => setIssues(issues.filter(i => i.id !== issue.id))} className="p-3 text-slate-200 hover:text-rose-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={24} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[50vh] text-center space-y-6">
+            <div className="p-8 bg-indigo-50 text-indigo-600 rounded-full"><Sparkles size={48} /></div>
+            <h2 className="text-4xl font-light text-slate-900 serif-font capitalize">{currentView.replace('-', ' ')}</h2>
+            <p className="text-slate-400 text-lg max-w-md">This sanctuary module is being prepared for your journey. Check back soon.</p>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default App;
