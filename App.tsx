@@ -10,7 +10,7 @@ interface Issue {
   status: 'identify' | 'ready_for_prayer';
 }
 
-type View = 'LOGIN' | 'DASHBOARD' | 'PHASE_1';
+type View = 'LOGIN' | 'DASHBOARD' | 'PHASE_1' | 'SETTINGS';
 
 function App() {
   // ------------------------------------------------
@@ -42,50 +42,80 @@ function App() {
   const addIssue = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newIssue.trim()) return;
-
     const issue: Issue = {
       id: Date.now(),
       text: newIssue,
       date: new Date().toLocaleDateString(),
       status: 'identify'
     };
-
     setIssues([issue, ...issues]);
     setNewIssue('');
-  };
-
-  const markReady = (id: number) => {
-    setIssues(issues.map(issue => 
-      issue.id === id ? { ...issue, status: 'ready_for_prayer' } : issue
-    ));
   };
 
   const deleteIssue = (id: number) => {
     setIssues(issues.filter(issue => issue.id !== id));
   };
 
-  const navigateTo = (view: View) => {
-    setCurrentView(view);
-  };
+  // ------------------------------------------------
+  // COMPONENTS (Sidebar & Layout)
+  // ------------------------------------------------
+  
+  const Sidebar = () => (
+    <div style={styles.sidebar}>
+      <div style={styles.logoArea}>
+        <div style={styles.logoIcon}>+</div>
+        <div>
+          <h2 style={styles.logoTitle}>Freedom</h2>
+          <p style={styles.logoSubtitle}>DIGITAL FRAMEWORK</p>
+        </div>
+      </div>
+
+      <nav style={styles.nav}>
+        <button 
+          onClick={() => setCurrentView('DASHBOARD')}
+          style={currentView === 'DASHBOARD' ? styles.navItemActive : styles.navItem}
+        >
+          🏠 Mission Control
+        </button>
+
+        <div style={styles.navSectionLabel}>PHASE 1: IDENTIFY</div>
+        <button 
+          onClick={() => setCurrentView('PHASE_1')}
+          style={currentView === 'PHASE_1' ? styles.navItemActive : styles.navItem}
+        >
+          ⚖️ Issue Tracker
+        </button>
+        <button style={styles.navItemLocked}>🙏 Initial Relief 🔒</button>
+
+        <div style={styles.navSectionLabel}>PHASE 2: ROOTS</div>
+        <button style={styles.navItemLocked}>📝 Inventory Prep 🔒</button>
+
+        <div style={styles.navSectionLabel}>SYSTEM</div>
+        <button onClick={() => setCurrentView('LOGIN')} style={styles.navItem}>
+          🔓 Logout
+        </button>
+      </nav>
+    </div>
+  );
 
   // ------------------------------------------------
-  // VIEW 1: LOGIN
+  // VIEW 1: LOGIN (Clean & Centered)
   // ------------------------------------------------
   if (currentView === 'LOGIN') {
     return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <h1 style={styles.title}>Prayer of Freedom</h1>
-          <p style={styles.subtitle}>Private Workspace</p>
+      <div style={styles.loginContainer}>
+        <div style={styles.loginCard}>
+          <h1 style={styles.serifTitle}>Prayer of Freedom</h1>
+          <p style={styles.subtitle}>Enter your passcode to access your private workspace.</p>
           <form onSubmit={handleLogin} style={styles.form}>
             <input
               type="password"
-              placeholder="Enter Passcode"
+              placeholder="••••••••"
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
-              style={styles.input}
+              style={styles.loginInput}
             />
-            <button type="submit" style={styles.button}>Enter App</button>
+            <button type="submit" style={styles.loginButton}>Enter App</button>
           </form>
           {error && <p style={styles.error}>{error}</p>}
         </div>
@@ -94,153 +124,135 @@ function App() {
   }
 
   // ------------------------------------------------
-  // VIEW 2: DASHBOARD (HOME BASE)
-  // ------------------------------------------------
-  if (currentView === 'DASHBOARD') {
-    return (
-      <div style={styles.appContainer}>
-        <header style={styles.header}>
-          <h2>Freedom Framework</h2>
-          <button onClick={() => navigateTo('LOGIN')} style={styles.logoutBtn}>Lock</button>
-        </header>
-
-        <main style={styles.mainContent}>
-          <div style={styles.welcomeSection}>
-            <h1>Welcome to Your Freedom Journey</h1>
-            <p>Select a phase below to begin your work today.</p>
-          </div>
-
-          <div style={styles.grid}>
-            {/* CARD 1: IDENTIFY (Active) */}
-            <div style={styles.activeCard} onClick={() => navigateTo('PHASE_1')}>
-              <div style={styles.cardHeader}>
-                <span style={styles.stepNumber}>01</span>
-                <h3>Identify</h3>
-              </div>
-              <p>Log your burdens and anxieties. Identify what is stealing your peace.</p>
-              <button style={styles.cardButton}>Open Tracker &rarr;</button>
-            </div>
-
-            {/* CARD 2: ROOTS (Coming Soon) */}
-            <div style={styles.lockedCard}>
-              <div style={styles.cardHeader}>
-                <span style={styles.stepNumberLocked}>02</span>
-                <h3>Roots</h3>
-              </div>
-              <p>Trace the lies back to their source.</p>
-              <span style={styles.comingSoon}>Coming Soon</span>
-            </div>
-
-            {/* CARD 3: PRAYER (Coming Soon) */}
-            <div style={styles.lockedCard}>
-              <div style={styles.cardHeader}>
-                <span style={styles.stepNumberLocked}>03</span>
-                <h3>Prayer</h3>
-              </div>
-              <p>Bring the truth into the light.</p>
-              <span style={styles.comingSoon}>Coming Soon</span>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // ------------------------------------------------
-  // VIEW 3: PHASE 1 (ISSUE TRACKER)
+  // VIEW 2: DASHBOARD (The "Mission Control" Look)
   // ------------------------------------------------
   return (
-    <div style={styles.appContainer}>
-      <header style={styles.header}>
-        <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-          <button onClick={() => navigateTo('DASHBOARD')} style={styles.backBtn}>&larr; Back</button>
-          <h2>Phase 1: Identify</h2>
-        </div>
-        <button onClick={() => navigateTo('LOGIN')} style={styles.logoutBtn}>Lock</button>
-      </header>
+    <div style={styles.layout}>
+      <Sidebar />
+      
+      <main style={styles.main}>
+        {currentView === 'DASHBOARD' && (
+          <div style={styles.contentContainer}>
+            <h1 style={styles.bigSerifTitle}>Welcome Home.</h1>
+            <p style={styles.heroSubtitle}>A guided path to walk out the freedom Christ has for you.</p>
+            
+            <h3 style={styles.sectionHeader}>How to Walk This Out</h3>
+            <p style={styles.sectionSub}>THE THREE-STEP PROCESS</p>
 
-      <main style={styles.mainContent}>
-        <section style={styles.inputSection}>
-          <p style={styles.instructionText}>What is on your mind right now?</p>
-          <form onSubmit={addIssue} style={styles.addForm}>
-            <input
-              type="text"
-              placeholder="I am feeling anxious about..."
-              value={newIssue}
-              onChange={(e) => setNewIssue(e.target.value)}
-              style={styles.mainInput}
-            />
-            <button type="submit" style={styles.addButton}>Add</button>
-          </form>
-        </section>
-
-        <div style={styles.listContainer}>
-          {issues.length === 0 ? (
-            <p style={styles.emptyState}>Your list is empty.</p>
-          ) : (
-            issues.map(issue => (
-              <div key={issue.id} style={styles.issueCard}>
-                <div style={styles.issueContent}>
-                  <span style={styles.date}>{issue.date}</span>
-                  <p style={styles.issueText}>{issue.text}</p>
-                </div>
-                <div style={styles.actions}>
-                   <button onClick={() => deleteIssue(issue.id)} style={styles.deleteBtn}>X</button>
-                </div>
+            <div style={styles.grid}>
+              {/* Card 1 */}
+              <div style={styles.processCard}>
+                <div style={styles.stepBadge}>1</div>
+                <h3 style={styles.cardTitle}>Identify</h3>
+                <p style={styles.cardText}>Name the struggles and symptoms clearly in your life.</p>
               </div>
-            ))
-          )}
-        </div>
+
+              {/* Card 2 */}
+              <div style={styles.processCard}>
+                <div style={styles.stepBadgeSecondary}>2</div>
+                <h3 style={styles.cardTitle}>Prepare</h3>
+                <p style={styles.cardText}>Systematically find the roots using the 18-category inventory.</p>
+              </div>
+
+              {/* Card 3 */}
+              <div style={styles.processCard}>
+                <div style={styles.stepBadgeSecondary}>3</div>
+                <h3 style={styles.cardTitle}>Freedom</h3>
+                <p style={styles.cardText}>Break agreements, repent, and receive lasting peace.</p>
+              </div>
+            </div>
+
+            <button onClick={() => setCurrentView('PHASE_1')} style={styles.ctaButton}>
+              Begin Phase 1 &rarr;
+            </button>
+          </div>
+        )}
+
+        {currentView === 'PHASE_1' && (
+          <div style={styles.contentContainer}>
+            <h1 style={styles.serifTitle}>Phase 1: Identify</h1>
+            <p style={styles.subtitle}>What is stealing your peace today?</p>
+            
+            <div style={styles.trackerBox}>
+              <form onSubmit={addIssue} style={styles.trackerForm}>
+                <input
+                  type="text"
+                  placeholder="e.g. Fear of the future..."
+                  value={newIssue}
+                  onChange={(e) => setNewIssue(e.target.value)}
+                  style={styles.trackerInput}
+                />
+                <button type="submit" style={styles.trackerButton}>Add Issue</button>
+              </form>
+            </div>
+
+            <div style={styles.issuesList}>
+               {issues.length === 0 ? (
+                <p style={styles.emptyState}>No issues tracked yet.</p>
+              ) : (
+                issues.map(issue => (
+                  <div key={issue.id} style={styles.issueRow}>
+                    <div>
+                      <span style={styles.date}>{issue.date}</span>
+                      <span style={styles.issueText}>{issue.text}</span>
+                    </div>
+                    <button onClick={() => deleteIssue(issue.id)} style={styles.deleteX}>×</button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
 // ------------------------------------------------
-// STYLES
+// STYLES (The "High-Fidelity" Look)
 // ------------------------------------------------
 const styles: { [key: string]: React.CSSProperties } = {
-  // Login & Shared
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#eef2f3', fontFamily: 'Arial, sans-serif' },
-  card: { backgroundColor: 'white', padding: '2.5rem', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', textAlign: 'center', maxWidth: '400px', width: '90%' },
-  title: { color: '#2c3e50', marginBottom: '0.5rem', fontSize: '1.8rem' },
-  subtitle: { color: '#95a5a6', marginBottom: '2rem' },
-  form: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  input: { padding: '15px', borderRadius: '8px', border: '1px solid #e0e0e0', fontSize: '16px', outline: 'none', transition: 'border 0.3s' },
-  button: { padding: '15px', borderRadius: '8px', border: 'none', backgroundColor: '#34495e', color: 'white', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold' },
-  error: { color: '#e74c3c', marginTop: '1rem' },
+  // Layout
+  layout: { display: 'flex', minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: '"Inter", "Segoe UI", sans-serif' },
+  sidebar: { width: '260px', backgroundColor: '#ffffff', borderRight: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column' },
+  main: { flex: 1, padding: '40px', overflowY: 'auto' },
+  contentContainer: { maxWidth: '900px', margin: '0 auto', textAlign: 'center' },
 
-  // Dashboard Styles
-  appContainer: { fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f7fa', minHeight: '100vh' },
-  header: { backgroundColor: '#ffffff', color: '#2c3e50', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' },
-  logoutBtn: { backgroundColor: 'transparent', border: '1px solid #bdc3c7', color: '#7f8c8d', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' },
-  mainContent: { padding: '40px 20px', maxWidth: '1000px', margin: '0 auto' },
-  welcomeSection: { marginBottom: '40px', textAlign: 'center' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' },
+  // Sidebar Elements
+  logoArea: { display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '40px' },
+  logoIcon: { width: '32px', height: '32px', backgroundColor: '#4f46e5', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' },
+  logoTitle: { margin: 0, fontSize: '18px', color: '#111827', fontFamily: 'Georgia, serif' },
+  logoSubtitle: { margin: 0, fontSize: '10px', color: '#6b7280', letterSpacing: '1px', fontWeight: 'bold' },
   
-  // Dashboard Cards
-  activeCard: { backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(52, 152, 219, 0.15)', cursor: 'pointer', border: '2px solid #3498db', transition: 'transform 0.2s' },
-  lockedCard: { backgroundColor: '#f8f9fa', padding: '30px', borderRadius: '12px', border: '1px solid #e0e0e0', opacity: 0.7 },
-  cardHeader: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' },
-  stepNumber: { fontSize: '1.5rem', fontWeight: 'bold', color: '#3498db' },
-  stepNumberLocked: { fontSize: '1.5rem', fontWeight: 'bold', color: '#bdc3c7' },
-  cardButton: { marginTop: '20px', backgroundColor: '#3498db', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' },
-  comingSoon: { display: 'inline-block', marginTop: '20px', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#95a5a6', border: '1px solid #bdc3c7', padding: '5px 10px', borderRadius: '20px' },
+  nav: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  navSectionLabel: { fontSize: '11px', color: '#9ca3af', fontWeight: 'bold', letterSpacing: '1px', marginTop: '20px', marginBottom: '8px' },
+  navItem: { textAlign: 'left', backgroundColor: 'transparent', border: 'none', padding: '10px 12px', borderRadius: '8px', color: '#4b5563', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s' },
+  navItemActive: { textAlign: 'left', backgroundColor: '#4f46e5', border: 'none', padding: '10px 12px', borderRadius: '8px', color: 'white', cursor: 'default', fontSize: '14px', fontWeight: 500, boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.2)' },
+  navItemLocked: { textAlign: 'left', backgroundColor: 'transparent', border: 'none', padding: '10px 12px', borderRadius: '8px', color: '#d1d5db', cursor: 'not-allowed', fontSize: '14px' },
 
-  // Phase 1 Styles
-  backBtn: { background: 'none', border: 'none', fontSize: '1rem', cursor: 'pointer', color: '#34495e', marginRight: '10px' },
-  inputSection: { backgroundColor: 'white', padding: '30px', borderRadius: '12px', marginBottom: '30px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },
-  instructionText: { fontSize: '1.2rem', color: '#34495e', marginBottom: '20px' },
-  addForm: { display: 'flex', gap: '15px' },
-  mainInput: { flex: 1, padding: '15px', borderRadius: '8px', border: '1px solid #e0e0e0', fontSize: '16px' },
-  addButton: { padding: '0 30px', borderRadius: '8px', border: 'none', backgroundColor: '#27ae60', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px' },
-  listContainer: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  issueCard: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 5px rgba(0,0,0,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  issueContent: { textAlign: 'left' },
-  date: { fontSize: '0.8rem', color: '#bdc3c7', marginBottom: '5px', display: 'block' },
-  issueText: { fontSize: '1.1rem', color: '#2c3e50', margin: 0 },
-  deleteBtn: { backgroundColor: '#fab1a0', color: 'white', border: 'none', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer' },
-  emptyState: { textAlign: 'center', color: '#bdc3c7', fontSize: '1.1rem', marginTop: '40px' }
-};
+  // Typography
+  bigSerifTitle: { fontSize: '48px', fontFamily: 'Georgia, serif', color: '#111827', margin: '0 0 16px 0', fontWeight: 'bold' },
+  serifTitle: { fontSize: '32px', fontFamily: 'Georgia, serif', color: '#111827', marginBottom: '16px' },
+  heroSubtitle: { fontSize: '18px', color: '#6b7280', marginBottom: '60px' },
+  sectionHeader: { fontSize: '24px', fontFamily: 'Georgia, serif', color: '#111827', marginBottom: '8px' },
+  sectionSub: { fontSize: '12px', color: '#9ca3af', letterSpacing: '2px', fontWeight: 'bold', marginBottom: '32px', textTransform: 'uppercase' },
+  subtitle: { fontSize: '16px', color: '#6b7280', marginBottom: '32px' },
 
-export default App;
+  // Cards & Grid
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '48px' },
+  processCard: { backgroundColor: 'white', padding: '32px', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', textAlign: 'center' },
+  stepBadge: { width: '40px', height: '40px', backgroundColor: '#e0e7ff', color: '#4f46e5', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', margin: '0 auto 20px auto' },
+  stepBadgeSecondary: { width: '40px', height: '40px', backgroundColor: '#f3f4f6', color: '#9ca3af', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', margin: '0 auto 20px auto' },
+  cardTitle: { fontSize: '18px', fontWeight: 'bold', color: '#111827', marginBottom: '8px' },
+  cardText: { fontSize: '14px', color: '#6b7280', lineHeight: '1.5' },
+
+  // Buttons & Interactions
+  ctaButton: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 48px', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.3)', transition: 'transform 0.2s' },
+  
+  // Login Styles
+  loginContainer: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6' },
+  loginCard: { backgroundColor: 'white', padding: '48px', borderRadius: '24px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', textAlign: 'center', width: '100%', maxWidth: '420px' },
+  form: { display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '32px' },
+  loginInput: { padding: '16px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', textAlign: 'center', letterSpacing: '4px' },
+  loginButton: { padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#4f46e5', color: 'white', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' },
+  error: { color: '#ef4444
