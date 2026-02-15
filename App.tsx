@@ -1,163 +1,167 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, LayoutDashboard, Scale, HandsPraying, 
-  ClipboardList, Sparkles, Settings, LogOut, Plus, Trash2, Lock
-} from 'lucide-react';
+import React, { useState } from 'react';
+import './App.css'; // Ensure you have basic styles or delete this line if using Tailwind
 
-const App = () => {
-  const [currentView, setCurrentView] = useState('login');
-  const [issues, setIssues] = useState([]);
-  const [newIssue, setNewIssue] = useState({ category: 'Emotional', description: '', intensity: 5 });
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const saved = localStorage.getItem('freedom_issues');
-    if (saved) setIssues(JSON.parse(saved));
-  }, []);
+  // The secret code to enter the app
+  const SECRET_CODE = "1234";
 
-  useEffect(() => {
-    localStorage.setItem('freedom_issues', JSON.stringify(issues));
-  }, [issues]);
-
-  const addIssue = () => {
-    if (!newIssue.description) return;
-    const issue = { ...newIssue, id: Date.now().toString(), date: new Date().toLocaleDateString() };
-    setIssues([issue, ...issues]);
-    setNewIssue({ category: 'Emotional', description: '', intensity: 5 });
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passcode === SECRET_CODE) {
+      setIsAuthenticated(true);
+      setError('');
+    } else {
+      setError('Incorrect passcode. Please try again.');
+    }
   };
 
-  const NavItem = ({ icon: Icon, label, view, active, locked = false }) => (
-    <button
-      onClick={() => !locked && setCurrentView(view)}
-      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
-        active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50'
-      } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
-    >
-      <Icon size={20} />
-      <span className="font-bold tracking-tight">{label}</span>
-      {locked && <Lock size={14} className="ml-auto" />}
-    </button>
-  );
-
-  if (currentView === 'login') {
+  // ------------------------------------------------
+  // VIEW 1: THE LOGIN GATEWAY
+  // ------------------------------------------------
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-6 font-sans">
-        <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl shadow-indigo-100/50 p-12 text-center border border-slate-100">
-          <div className="inline-flex p-5 bg-indigo-600 rounded-3xl text-white mb-8 shadow-xl shadow-indigo-200">
-            <ShieldCheck size={48} />
-          </div>
-          <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tighter">Freedom</h1>
-          <p className="text-slate-400 font-bold mb-10 uppercase tracking-[0.2em] text-[10px]">Digital Framework</p>
-          <button 
-            onClick={() => setCurrentView('dashboard')}
-            className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 text-lg"
-          >
-            Enter Sanctuary
-          </button>
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>Prayer of Freedom</h1>
+          <p style={styles.subtitle}>Enter your passcode to access your private workspace.</p>
+          
+          <form onSubmit={handleLogin} style={styles.form}>
+            <input
+              type="password"
+              placeholder="Enter Passcode"
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              style={styles.input}
+            />
+            <button type="submit" style={styles.button}>
+              Enter App
+            </button>
+          </form>
+          
+          {error && <p style={styles.error}>{error}</p>}
         </div>
       </div>
     );
   }
 
+  // ------------------------------------------------
+  // VIEW 2: THE MAIN APP (Phase 1 & 2)
+  // ------------------------------------------------
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex font-sans">
-      <aside className="w-80 bg-white border-r border-slate-200 flex flex-col p-8 space-y-10">
-        <div className="flex items-center space-x-4 px-2">
-          <div className="p-2.5 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100">
-            <ShieldCheck size={28} />
-          </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 tracking-tighter block leading-none">Freedom</span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Digital Framework</span>
-          </div>
+    <div style={styles.appContainer}>
+      <header style={styles.header}>
+        <h2>Prayer of Freedom</h2>
+        <button onClick={() => setIsAuthenticated(false)} style={styles.logoutBtn}>
+          Lock App
+        </button>
+      </header>
+
+      <main style={styles.mainContent}>
+        <h3>Current Phase: Identify (Phase 1)</h3>
+        <p>Your Issue Tracker and Inventory tools will go here.</p>
+        
+        {/* PLACEHOLDER FOR YOUR FUTURE MODULES */}
+        <div style={styles.placeholderBox}>
+          <p>Inventory Module Loading...</p>
         </div>
-
-        <nav className="flex-1 space-y-8">
-          <div>
-            <NavItem icon={LayoutDashboard} label="Mission Control" view="dashboard" active={currentView === 'dashboard'} />
-          </div>
-          <div className="space-y-2">
-            <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] px-4">Phase 1: Identify</div>
-            <NavItem icon={Scale} label="Issue Tracker" view="tracker" active={currentView === 'tracker'} />
-            <NavItem icon={HandsPraying} label="Initial Relief" view="relief" active={currentView === 'relief'} />
-          </div>
-          <div className="space-y-2">
-            <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] px-4">Phase 2: Roots</div>
-            <NavItem icon={ClipboardList} label="Inventory Prep" view="inventory" active={currentView === 'inventory'} />
-          </div>
-        </nav>
-
-        <div className="pt-8 border-t border-slate-100 space-y-2">
-          <NavItem icon={Settings} label="App Settings" view="settings" locked={true} />
-          <button onClick={() => setCurrentView('login')} className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-50 font-bold transition-all">
-            <LogOut size={20} />
-            <span>Logout and Lock</span>
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 p-16 overflow-y-auto">
-        {currentView === 'dashboard' ? (
-          <div className="max-w-5xl mx-auto space-y-16">
-            <header className="space-y-6">
-              <h1 className="text-[8rem] font-light text-slate-900 leading-[0.9] serif-font -ml-2 tracking-tighter">Welcome Home.</h1>
-              <p className="text-2xl text-slate-400 font-medium max-w-2xl leading-relaxed">A guided path to walk out the freedom Christ has for you.</p>
-            </header>
-            <div className="bg-white p-12 rounded-[3rem] border border-slate-100 shadow-sm flex items-center justify-between">
-               <div className="space-y-1">
-                  <h3 className="text-slate-400 uppercase tracking-widest text-xs font-black">Active Journey</h3>
-                  <p className="text-4xl font-bold text-slate-900">You have <span className="text-indigo-600">{issues.length}</span> items logged.</p>
-               </div>
-               <button onClick={() => setCurrentView('tracker')} className="px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-xl">Open Tracker</button>
-            </div>
-          </div>
-        ) : currentView === 'tracker' ? (
-          <div className="max-w-4xl mx-auto space-y-12">
-            <header className="flex items-end justify-between border-b border-slate-200 pb-10">
-              <div className="space-y-2">
-                <h2 className="text-5xl font-light text-slate-900 serif-font">Issue Tracker</h2>
-                <p className="text-slate-400 font-medium">Be honest and specific. What are you feeling right now?</p>
-              </div>
-            </header>
-            <div className="bg-white p-10 rounded-[2.5rem] border border-indigo-50 shadow-sm space-y-6">
-              <div className="flex items-center space-x-4">
-                <select 
-                  value={newIssue.category}
-                  onChange={(e) => setNewIssue({...newIssue, category: e.target.value})}
-                  className="px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 outline-none"
-                >
-                  <option>Emotional</option><option>Physical</option><option>Relational</option><option>Spiritual</option>
-                </select>
-                <input 
-                  type="text" placeholder="Describe the symptom..."
-                  value={newIssue.description}
-                  onChange={(e) => setNewIssue({...newIssue, description: e.target.value})}
-                  className="flex-1 px-6 py-4 bg-slate-50 border-none rounded-2xl font-medium outline-none"
-                />
-                <button onClick={addIssue} className="p-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all"><Plus size={28} /></button>
-              </div>
-            </div>
-            <div className="space-y-6">
-              {issues.map(issue => (
-                <div key={issue.id} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-all">
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">{issue.category}</span>
-                    <p className="text-2xl font-bold text-slate-800 tracking-tight">{issue.description}</p>
-                  </div>
-                  <button onClick={() => setIssues(issues.filter(i => i.id !== issue.id))} className="p-3 text-slate-200 hover:text-rose-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={24} /></button>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[50vh] text-center space-y-6">
-            <div className="p-8 bg-indigo-50 text-indigo-600 rounded-full"><Sparkles size={48} /></div>
-            <h2 className="text-4xl font-light text-slate-900 serif-font capitalize">{currentView.replace('-', ' ')}</h2>
-            <p className="text-slate-400 text-lg max-w-md">This sanctuary module is being prepared for your journey. Check back soon.</p>
-          </div>
-        )}
       </main>
     </div>
   );
+}
+
+// ------------------------------------------------
+// STYLES (Internal for simplicity - works on Mobile & PC)
+// ------------------------------------------------
+const styles: { [key: string]: React.CSSProperties } = {
+  container: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    backgroundColor: '#f0f2f5',
+    fontFamily: 'Arial, sans-serif',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    textAlign: 'center',
+    maxWidth: '400px',
+    width: '90%',
+  },
+  title: {
+    color: '#2c3e50',
+    marginBottom: '0.5rem',
+  },
+  subtitle: {
+    color: '#7f8c8d',
+    marginBottom: '1.5rem',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  },
+  input: {
+    padding: '12px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    fontSize: '16px',
+  },
+  button: {
+    padding: '12px',
+    borderRadius: '6px',
+    border: 'none',
+    backgroundColor: '#3498db',
+    color: 'white',
+    fontSize: '16px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
+  error: {
+    color: '#e74c3c',
+    marginTop: '1rem',
+    fontSize: '14px',
+  },
+  appContainer: {
+    fontFamily: 'Arial, sans-serif',
+    backgroundColor: '#fff',
+    minHeight: '100vh',
+  },
+  header: {
+    backgroundColor: '#2c3e50',
+    color: 'white',
+    padding: '1rem',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  logoutBtn: {
+    backgroundColor: 'transparent',
+    border: '1px solid white',
+    color: 'white',
+    padding: '5px 10px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
+  mainContent: {
+    padding: '20px',
+    maxWidth: '800px',
+    margin: '0 auto',
+  },
+  placeholderBox: {
+    border: '2px dashed #bdc3c7',
+    padding: '40px',
+    textAlign: 'center',
+    color: '#7f8c8d',
+    marginTop: '20px',
+    borderRadius: '8px',
+  }
 };
 
 export default App;
