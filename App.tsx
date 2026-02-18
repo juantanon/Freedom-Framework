@@ -457,4 +457,164 @@ function App() {
         {activePrayer === 'FREEDOM' && (
           <div style={styles.prayerText}>
             <h1>The Prayer of Freedom {prayerMode === 'OTHERS' ? `(For ${getName()})` : "(Personal)"}</h1>
-            <p><strong>Instructions:</strong> Read out loud
+            <p><strong>Instructions:</strong> Read out loud. {prayerMode === 'SELF' ? 'Your saved lists are below.' : 'Fill in the blanks as you go.'}</p>
+            <hr style={styles.divider}/>
+            
+            {prayerMode === 'SELF' ? (
+              // ---------------- SELF PRAYER ----------------
+              <>
+                <p>“Lord Jesus, I repent of my sins. I want freedom from my burdens and I ask you to help me. Please bring to mind any sin I need to repent of or a person I need to forgive to set me free.</p>
+                
+                <h3>1. Unforgiveness</h3>
+                <p>“I repent of unforgiveness, for I know that it is a sin. I therefore choose to forgive, release all judgments against, and break all unholy soul ties with the following people:</p>
+                <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+
+                <h3>2. Sexual Sin</h3>
+                <p>“I repent of my sexual sins with the following people. I break all unholy blood contracts with each one, and I renounce and break all unholy soul ties with them, including:</p>
+                <div style={styles.variableBlock}>{getList('sexual_sin')}</div>
+
+                <h3>3. Occult & False Religions</h3>
+                <p>“I repent of and renounce all occult activity I have engaged in, including:</p>
+                <div style={styles.variableBlock}>{getList('occult')}</div>
+
+                <h3>4. Other Sins & Roots</h3>
+                <p>“I also repent of these specific areas I have identified (Idolatry, Vows, Pride, etc):</p>
+                <div style={styles.variableBlock}>{getCombinedOthers()}</div>
+
+                <h3>Closing Command</h3>
+                <p>“And now, in Jesus’ name, I command every unholy spirit to leave me immediately. I declare you have no further right to me, and I command you to go now, in Jesus’ name, and go where Jesus tells you to go.</p>
+                <p>“Lord Jesus, I now ask that you enforce my freedom from the curse of sin. I ask that you remove all unholy spirits from my life right now and set me free. Amen!”</p>
+              </>
+            ) : (
+              // ---------------- LOVED ONE PRAYER ----------------
+              <>
+                 <p>“Lord Jesus, I come before you on <strong>{getName()}'s</strong> behalf. Please bring to mind any sin I need to repent of or person I need to forgive on {getName()}'s behalf.</p>
+
+                 <h3>1. Unforgiveness</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of unforgiveness. I declare that {getHeShe()} chooses to forgive and release:</p>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
+
+                 <h3>2. Sexual Sin</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of sexual sins and soul ties, including:</p>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
+
+                 <h3>3. Occult</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of and renounce all occult activity, including:</p>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
+                 
+                 <h3>4. Other Sins</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I also repent of other sins and roots, including:</p>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
+
+                 <h3>Closing Command</h3>
+                 <p>“And now, in Jesus’ name, I command every unholy spirit to leave <strong>{getName()}</strong> immediately. Go now, in Jesus’ name!</p>
+                 <p>“Lord Jesus, I ask that you remove all unholy spirits from {getName()}'s life right now and set {getName()} free. Amen!”</p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* RECOVERY PRAYER (Integrated with Identify Phase) */}
+        {activePrayer === 'RECOVERY' && (
+           <div style={styles.prayerText}>
+             <h1>3-Step Recovery Prayer</h1>
+             <div style={styles.nameInputBlock}>
+               <p><strong>Target Issue:</strong> {getLatestIssue()}</p>
+             </div>
+             <p><em>Use this for immediate relief from an emotional outburst or pain.</em></p>
+             <h3>Step 1: Reveal</h3>
+             <p>“Lord Jesus, I repent of my sins, and I ask you to help me recover. Please reveal any sin I need to repent of or person I need to forgive to set me free of <strong>{getLatestIssue()}</strong>.”</p>
+             <h3>Step 2: Repent</h3>
+             <p>“I repent of _________ (name the sin).”</p>
+             <p>“I forgive _________ (name the person).”</p>
+             <h3>Step 3: Command</h3>
+             <p>“And in Jesus’ name, I now command the spirit of <strong>{getLatestIssue()}</strong> to leave me, immediately. Go now, in Jesus’ name!”</p>
+           </div>
+        )}
+        
+        {activePrayer === 'DAILY' && (
+           <div style={styles.prayerText}>
+             <h1>The Daily Prayer</h1>
+             <p>Heavenly Father, I come to you in Jesus’ name... I ask for your grace to help me deny myself, die to myself, be fully led by your Spirit.</p>
+             <p>I repent of my sins, I forgive each person who has hurt me, and I release all judgments against them:</p>
+             <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+             <p>I claim Jesus’ blood over all our sins, and I command all unholy spirits to leave us now! Go, in Jesus’ name!</p>
+             <p>I pray all of this in the Holy Name of Jesus. Amen.</p>
+           </div>
+        )}
+        
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------
+// STYLES
+// ------------------------------------------------
+const styles: { [key: string]: React.CSSProperties } = {
+  // Layouts
+  centerContainer: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6' },
+  layout: { display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Inter, sans-serif' },
+  header: { padding: '20px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', alignItems: 'center', backgroundColor: '#fff', position: 'sticky', top: 0, zIndex: 10 },
+  main: { maxWidth: '900px', margin: '20px auto', textAlign: 'center', padding: '20px', width: '100%' },
+  
+  // Sidebar
+  sidebar: { width: '300px', backgroundColor: '#f8f9fa', borderRight: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 20 },
+  scrollList: { overflowY: 'auto', flex: 1, marginTop: '20px' },
+  sidebarTitle: { fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' },
+  
+  // Content Logic
+  mainContent: { flex: 1, padding: '20px', backgroundColor: '#fff', minHeight: '100vh', marginLeft: '0' }, 
+  workArea: { maxWidth: '700px', margin: '0 auto', paddingBottom: '100px' }, 
+  workHeader: { marginBottom: '20px' },
+  
+  // Components
+  card: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', width: '100%', maxWidth: '300px', border: '1px solid #eee', margin: '10px' },
+  cardActive: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', border: '2px solid #4f46e5', width: '100%', maxWidth: '300px', boxShadow: '0 4px 15px rgba(79, 70, 229, 0.1)', margin: '10px' },
+  grid: { display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' },
+  
+  // Inputs & Buttons
+  input: { width: '100%', padding: '16px', margin: '15px 0', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center' },
+  inlineInput: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', marginLeft: '10px', width: '200px' },
+  textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
+  
+  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
+  btnSecondary: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
+  
+  btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px', padding: '10px' },
+  backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '10px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px', padding: '10px' },
+  editBtn: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
+
+  // List Items
+  catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px', borderBottom: '1px solid #f3f4f6' },
+  catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
+  catNum: { display: 'inline-block', width: '30px', color: '#9ca3af', fontSize: '12px' },
+  issueRow: { backgroundColor: 'white', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', marginBottom: '10px' },
+
+  // Prayer Room Styles
+  prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
+  prayerHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
+  prayerText: { fontSize: '18px', lineHeight: '1.8', color: '#1f2937', textAlign: 'left' },
+  divider: { margin: '30px 0', border: 'none', borderTop: '1px solid #e5e7eb' },
+  variableBlock: { backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '15px', margin: '15px 0', color: '#1e3a8a', whiteSpace: 'pre-wrap', borderRadius: '4px' },
+  variableBlockBlank: { backgroundColor: '#fff', border: '1px dashed #ccc', padding: '15px', margin: '15px 0', color: '#999', borderRadius: '4px' },
+  nameInputBlock: { backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #e5e7eb', textAlign: 'center' },
+
+  // Toggle
+  toggleContainer: { display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' },
+  toggle: { padding: '8px 16px', border: 'none', backgroundColor: 'transparent', color: '#6b7280', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px' },
+  toggleActive: { padding: '8px 16px', border: 'none', backgroundColor: 'white', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
+
+  // Typography
+  serifTitle: { fontFamily: 'Georgia, serif', color: '#111827', margin: 0 },
+  bigTitle: { fontFamily: 'Georgia, serif', fontSize: '32px', color: '#111827', marginBottom: '10px' },
+  subtitle: { color: '#6b7280', fontSize: '16px' },
+  textGray: { color: '#6b7280', marginBottom: '15px', fontSize: '14px' },
+  tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px', display: 'inline-block' },
+  instruction: { fontSize: '16px', color: '#4b5563', marginBottom: '20px', lineHeight: '1.5' },
+  stepBadgeActive: { display: 'block', fontSize: '24px', color: '#4f46e5', fontWeight: 'bold', marginBottom: '10px' },
+  check: { color: '#10b981', marginLeft: '8px', fontWeight: 'bold' },
+  saveIndicator: { textAlign: 'right', marginTop: '10px', fontSize: '12px', fontWeight: 'bold' }
+};
+
+export default App;
