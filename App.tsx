@@ -18,6 +18,13 @@ interface CategoryData {
   placeholder: string;
 }
 
+interface Issue {
+  id: number;
+  text: string;
+  intensity: number; // 0-10
+  date: string;
+}
+
 // The "Master List" 
 const CATEGORIES: CategoryData[] = [
   { id: 'parent_child', title: 'Parent-Child Relationship', videoNum: '#1', placeholder: 'List specific wounds from father or mother...' },
@@ -43,7 +50,7 @@ function App() {
   // ------------------------------------------------
   // STATE
   // ------------------------------------------------
-  const [view, setView] = useState<'LOGIN' | 'DASHBOARD' | 'INVENTORY' | 'PRAYER_MENU' | 'PRAYER_ACTIVE' | 'SETTINGS'>('LOGIN');
+  const [view, setView] = useState<'LOGIN' | 'DASHBOARD' | 'IDENTIFY' | 'INVENTORY' | 'PRAYER_MENU' | 'PRAYER_ACTIVE' | 'SETTINGS'>('LOGIN');
   const [passcode, setPasscode] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryData | null>(null);
   const [activePrayer, setActivePrayer] = useState<string>('');
@@ -52,29 +59,60 @@ function App() {
   const [prayerMode, setPrayerMode] = useState<'SELF' | 'OTHERS'>('SELF');
   const [lovedOneName, setLovedOneName] = useState('');
   
-  // Inventory Data
+  // DATA: Inventory (Phase 2)
   const [inventory, setInventory] = useState<Record<string, string>>({});
+  
+  // DATA: Issues (Phase 1)
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [newIssueText, setNewIssueText] = useState('');
+  const [newIssueIntensity, setNewIssueIntensity] = useState(5);
 
-  // LOAD SAVED DATA ON STARTUP
+  // ------------------------------------------------
+  // DATA PERSISTENCE (The "Vault")
+  // ------------------------------------------------
   useEffect(() => {
-    const saved = localStorage.getItem('freedom_inventory');
-    if (saved) {
-      setInventory(JSON.parse(saved));
-    }
+    // Load Inventory
+    const savedInv = localStorage.getItem('freedom_inventory');
+    if (savedInv) setInventory(JSON.parse(savedInv));
+
+    // Load Issues
+    const savedIssues = localStorage.getItem('freedom_issues');
+    if (savedIssues) setIssues(JSON.parse(savedIssues));
   }, []);
 
-  // SAVE DATA WHENEVER IT CHANGES
   const updateInventory = (key: string, text: string) => {
     const newInventory = { ...inventory, [key]: text };
     setInventory(newInventory);
     localStorage.setItem('freedom_inventory', JSON.stringify(newInventory));
   };
+
+  const addIssue = () => {
+    if (!newIssueText.trim()) return;
+    const newIssue: Issue = {
+      id: Date.now(),
+      text: newIssueText,
+      intensity: newIssueIntensity,
+      date: new Date().toLocaleDateString()
+    };
+    const updatedIssues = [newIssue, ...issues];
+    setIssues(updatedIssues);
+    localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
+    setNewIssueText('');
+    setNewIssueIntensity(5);
+  };
+
+  const deleteIssue = (id: number) => {
+    const updatedIssues = issues.filter(i => i.id !== id);
+    setIssues(updatedIssues);
+    localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
+  };
   
-  // RESET DATA
   const clearAllData = () => {
-    if (window.confirm("Are you sure? This will delete all your lists.")) {
+    if (window.confirm("Are you sure? This will delete ALL your lists and issues.")) {
       localStorage.removeItem('freedom_inventory');
+      localStorage.removeItem('freedom_issues');
       setInventory({});
+      setIssues([]);
       alert("All data cleared.");
       setView('DASHBOARD');
     }
@@ -86,31 +124,36 @@ function App() {
   // HELPERS FOR PRAYER INJECTION
   // ------------------------------------------------
   const getList = (key: string) => {
+    // If praying for others, return a blank line (The "Guest Mode")
+    if (prayerMode === 'OTHERS') return "____________________";
+    
+    // If praying for self, pull from saved data
     const val = inventory[key];
     return val && val.trim().length > 0 ? val : "___________";
   };
 
-  // Aggregates all "Other" categories
   const getCombinedOthers = () => {
+    if (prayerMode === 'OTHERS') return "____________________";
     const mainKeys = ['unforgiveness', 'sexual_sin', 'occult'];
     const others = CATEGORIES.filter(c => !mainKeys.includes(c.id));
-    
     let combined = "";
     others.forEach(cat => {
-      if (inventory[cat.id]) {
-        combined += `\n• [${cat.title}]: ${inventory[cat.id]}`;
-      }
+      if (inventory[cat.id]) combined += `\n• [${cat.title}]: ${inventory[cat.id]}`;
     });
     return combined || "___________";
   };
 
-  // Dynamic Name Helper
+  const getLatestIssue = () => {
+    if (issues.length > 0) return issues[0].text;
+    return "this issue";
+  };
+
   const getName = () => prayerMode === 'OTHERS' && lovedOneName ? lovedOneName : "me";
-  const getHeShe = () => "he/she"; // Can be refined later
+  const getHeShe = () => "he/she"; 
   const getHimHer = () => "him/her";
 
   // ------------------------------------------------
-  // LOGIN LOGIC
+  // VIEW: LOGIN
   // ------------------------------------------------
   if (view === 'LOGIN') {
     return (
@@ -137,7 +180,7 @@ function App() {
   }
 
   // ------------------------------------------------
-  // DASHBOARD
+  // VIEW: DASHBOARD
   // ------------------------------------------------
   if (view === 'DASHBOARD') {
     return (
@@ -152,13 +195,17 @@ function App() {
           <p style={styles.subtitle}>Select a phase to begin your work.</p>
           
           <div style={styles.grid}>
-            <div style={styles.card}>
-              <span style={styles.stepBadge}>01</span>
+            {/* PHASE 1: IDENTIFY */}
+            <div style={styles.cardActive}>
+              <span style={styles.stepBadgeActive}>01</span>
               <h3>Identify</h3>
-              <p style={styles.textGray}>Log your daily burdens.</p>
-              <button style={styles.btnSecondary} disabled>Coming Soon</button>
+              <p style={styles.textGray}>Log current burdens & intensity.</p>
+              <button onClick={() => setView('IDENTIFY')} style={styles.btnPrimary}>
+                Open Issue Tracker &rarr;
+              </button>
             </div>
 
+            {/* PHASE 2: INVENTORY */}
             <div style={styles.cardActive}>
               <span style={styles.stepBadgeActive}>02</span>
               <h3>Inventory (Roots)</h3>
@@ -168,6 +215,7 @@ function App() {
               </button>
             </div>
 
+             {/* PHASE 3: PRAYER */}
              <div style={styles.cardActive}>
               <span style={styles.stepBadgeActive}>03</span>
               <h3>Prayer Room</h3>
@@ -183,30 +231,69 @@ function App() {
   }
 
   // ------------------------------------------------
-  // SETTINGS VIEW
+  // VIEW: IDENTIFY (ISSUE TRACKER)
   // ------------------------------------------------
-  if (view === 'SETTINGS') {
+  if (view === 'IDENTIFY') {
     return (
       <div style={styles.layout}>
         <header style={styles.header}>
-           <button onClick={() => setView('DASHBOARD')} style={styles.backBtn}>&larr; Back</button>
-           <h2 style={styles.logo}>App Settings</h2>
+           <button onClick={() => setView('DASHBOARD')} style={styles.backBtn}>&larr; Home</button>
+           <h2 style={styles.logo}>Phase 1: Identify</h2>
         </header>
         <main style={styles.main}>
-           <div style={styles.card}>
-             <h3>Data Management</h3>
-             <p style={styles.textGray}>Clear all saved lists and reset the app.</p>
-             <button onClick={clearAllData} style={styles.btnDestructive}>Reset All Data</button>
-           </div>
-           <br />
-           <button onClick={() => setView('LOGIN')} style={styles.btnText}>🔒 Logout</button>
+          <div style={styles.workArea}>
+            <h1>What is troubling you?</h1>
+            <p style={styles.instruction}>Name the issue (e.g. Anxiety, Back Pain) and rate the intensity.</p>
+            
+            <div style={styles.inputGroup}>
+              <input 
+                type="text" 
+                placeholder="Name the issue..." 
+                value={newIssueText}
+                onChange={(e) => setNewIssueText(e.target.value)}
+                style={styles.input}
+              />
+              <div style={{marginBottom: '20px'}}>
+                <label style={{fontWeight: 'bold', display: 'block', marginBottom: '10px'}}>Intensity (0-10): {newIssueIntensity}</label>
+                <input 
+                  type="range" 
+                  min="0" max="10" 
+                  value={newIssueIntensity}
+                  onChange={(e) => setNewIssueIntensity(parseInt(e.target.value))}
+                  style={{width: '100%'}}
+                />
+              </div>
+              <button onClick={addIssue} style={styles.btnPrimary}>Log Issue</button>
+            </div>
+
+            <div style={{marginTop: '40px', textAlign: 'left'}}>
+              <h3>Recent Issues</h3>
+              {issues.length === 0 && <p style={{color: '#999', fontStyle: 'italic'}}>No issues logged yet.</p>}
+              {issues.map(issue => (
+                <div key={issue.id} style={styles.issueRow}>
+                  <div>
+                    <span style={{fontWeight: 'bold', fontSize: '18px'}}>{issue.text}</span>
+                    <br/>
+                    <span style={{fontSize: '12px', color: '#666'}}>{issue.date} • Level: {issue.intensity}/10</span>
+                  </div>
+                  <button onClick={() => deleteIssue(issue.id)} style={{color: 'red', border: 'none', background: 'none', cursor: 'pointer'}}>×</button>
+                </div>
+              ))}
+            </div>
+            
+            {issues.length > 0 && (
+               <button onClick={() => { setActivePrayer('RECOVERY'); setView('PRAYER_ACTIVE'); }} style={styles.btnSecondary}>
+                 Go to Recovery Prayer for "{issues[0].text}" &rarr;
+               </button>
+            )}
+          </div>
         </main>
       </div>
     );
   }
 
   // ------------------------------------------------
-  // INVENTORY VIEW
+  // VIEW: INVENTORY
   // ------------------------------------------------
   if (view === 'INVENTORY') {
     return (
@@ -254,7 +341,7 @@ function App() {
               />
               
               <div style={styles.saveIndicator}>
-                {inventory[activeCategory.id] ? 'Saved ✓' : 'Start typing to save...'}
+                {inventory[activeCategory.id] ? <span style={{color:'#10b981'}}>Saved to Device ✓</span> : 'Start typing...'}
               </div>
             </div>
           )}
@@ -264,7 +351,7 @@ function App() {
   }
 
   // ------------------------------------------------
-  // PRAYER MENU
+  // VIEW: PRAYER MENU
   // ------------------------------------------------
   if (view === 'PRAYER_MENU') {
     return (
@@ -294,7 +381,7 @@ function App() {
             {/* PRAYER 3: 3-STEP */}
             <div style={styles.cardActive}>
               <h3>3-Step Recovery</h3>
-              <p style={styles.textGray}>Quick prayer for immediate issues.</p>
+              <p style={styles.textGray}>Quick prayer for immediate issues (Anxiety, Pain, etc).</p>
               <button onClick={() => { setActivePrayer('RECOVERY'); setView('PRAYER_ACTIVE'); }} style={styles.btnPrimary}>Start Prayer</button>
             </div>
           </div>
@@ -304,7 +391,7 @@ function App() {
   }
 
   // ------------------------------------------------
-  // PRAYER ACTIVE VIEW (THE ENGINE)
+  // VIEW: PRAYER ACTIVE
   // ------------------------------------------------
   return (
     <div style={styles.layout}>
@@ -324,15 +411,16 @@ function App() {
                style={prayerMode === 'OTHERS' ? styles.toggleActive : styles.toggle}
                onClick={() => setPrayerMode('OTHERS')}
              >
-               For Loved One
+               For Loved One (Blank)
              </button>
            </div>
-           <button onClick={() => setView('INVENTORY')} style={styles.editBtn}>✎ Lists</button>
+           {prayerMode === 'SELF' && <button onClick={() => setView('INVENTORY')} style={styles.editBtn}>✎ Lists</button>}
         </div>
 
         {/* LOVED ONE NAME INPUT */}
         {prayerMode === 'OTHERS' && (
           <div style={styles.nameInputBlock}>
+            <p><strong>Guest Mode:</strong> Your personal lists are hidden.</p>
             <p>Who are you praying for today?</p>
             <input 
               type="text" 
@@ -347,7 +435,7 @@ function App() {
         {activePrayer === 'FREEDOM' && (
           <div style={styles.prayerText}>
             <h1>The Prayer of Freedom {prayerMode === 'OTHERS' ? `(For ${getName()})` : "(Personal)"}</h1>
-            <p><strong>Instructions:</strong> Read out loud. The names and issues you listed in your Inventory have been added below.</p>
+            <p><strong>Instructions:</strong> Read out loud. {prayerMode === 'SELF' ? 'Your saved lists are below.' : 'Fill in the blanks as you go.'}</p>
             <hr style={styles.divider}/>
             
             {prayerMode === 'SELF' ? (
@@ -362,17 +450,14 @@ function App() {
                 <h3>2. Sexual Sin</h3>
                 <p>“I repent of my sexual sins with the following people. I break all unholy blood contracts with each one, and I renounce and break all unholy soul ties with them, including:</p>
                 <div style={styles.variableBlock}>{getList('sexual_sin')}</div>
-                <p>I break all unholy soul ties with their sexual partners and all my other sexual partners I may not recall.</p>
 
                 <h3>3. Occult & False Religions</h3>
                 <p>“I repent of and renounce all occult activity I have engaged in, including:</p>
                 <div style={styles.variableBlock}>{getList('occult')}</div>
-                <p>And I break all unholy soul ties with those who encouraged me to do those activities.</p>
 
                 <h3>4. Other Sins & Roots</h3>
                 <p>“I also repent of these specific areas I have identified (Idolatry, Vows, Pride, etc):</p>
                 <div style={styles.variableBlock}>{getCombinedOthers()}</div>
-                <p>And I break all unholy soul ties with anyone involved in these sins.</p>
 
                 <h3>Closing Command</h3>
                 <p>“And now, in Jesus’ name, I command every unholy spirit to leave me immediately. I declare you have no further right to me, and I command you to go now, in Jesus’ name, and go where Jesus tells you to go.</p>
@@ -381,60 +466,58 @@ function App() {
             ) : (
               // ---------------- LOVED ONE PRAYER ----------------
               <>
-                 <p>“Lord Jesus, I come before you on <strong>{getName()}'s</strong> behalf to help {getHimHer()} with their burdens. Please bring to mind any sin I need to repent of or person I need to forgive on {getName()}'s behalf to set {getHimHer()} free.</p>
+                 <p>“Lord Jesus, I come before you on <strong>{getName()}'s</strong> behalf. Please bring to mind any sin I need to repent of or person I need to forgive on {getName()}'s behalf.</p>
 
                  <h3>1. Unforgiveness</h3>
-                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of unforgiveness, for that it is a sin. I, therefore, declare that {getHeShe()} chooses to forgive, release all judgments against, and break all unholy soul ties with those held unforgiveness towards, including:</p>
-                 <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of unforgiveness. I declare that {getHeShe()} chooses to forgive and release:</p>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
 
                  <h3>2. Sexual Sin</h3>
-                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of sexual sins, I break all unholy blood contracts with each one, and I renounce and break all unholy soul ties with each sexual sin partner, including:</p>
-                 <div style={styles.variableBlock}>{getList('sexual_sin')}</div>
-                 <p>I also declare on {getName()}'s behalf that {getHeShe()} breaks all unholy soul ties with their sexual partners and all other sexual partners I may not have listed.</p>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of sexual sins and soul ties, including:</p>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
 
                  <h3>3. Occult</h3>
-                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of and renounce all occult activity engaged in, including:</p>
-                 <div style={styles.variableBlock}>{getList('occult')}</div>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of and renounce all occult activity, including:</p>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
                  
                  <h3>4. Other Sins</h3>
                  <p>“On <strong>{getName()}'s</strong> behalf: I also repent of other sins and roots, including:</p>
-                 <div style={styles.variableBlock}>{getCombinedOthers()}</div>
+                 <div style={styles.variableBlockBlank}>_______________________________</div>
 
                  <h3>Closing Command</h3>
-                 <p>“And now, in Jesus’ name, I command every unholy spirit to leave <strong>{getName()}</strong> immediately. I declare you have no further right to {getName()}, and I command you to go now, in Jesus’ name, and go where Jesus tells you to go.</p>
-                 <p>“Lord Jesus, I now ask that you enforce {getName()}'s freedom from the curse of sin. I ask that you remove all unholy spirits from {getName()}'s life right now and set {getName()} free. Amen!”</p>
+                 <p>“And now, in Jesus’ name, I command every unholy spirit to leave <strong>{getName()}</strong> immediately. Go now, in Jesus’ name!</p>
+                 <p>“Lord Jesus, I ask that you remove all unholy spirits from {getName()}'s life right now and set {getName()} free. Amen!”</p>
               </>
             )}
           </div>
         )}
 
-        {/* ... (Other Prayers remain the same) ... */}
-        {activePrayer === 'DAILY' && (
-           <div style={styles.prayerText}>
-             <h1>The Daily Prayer</h1>
-             <p>Heavenly Father, I come to you in Jesus’ name... I ask for your grace to help me deny myself, die to myself, be fully led by your Spirit, and no longer conform to the patterns of this world.</p>
-             <p>I repent of my sins, I forgive each person who has hurt me, and I release all judgments against them:</p>
-             <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
-             <p>And I break all unholy soul ties I have with any person:</p>
-             <div style={styles.variableBlock}>{getList('soul_ties') || "(List any soul ties here)"}</div>
-             <p>I claim Jesus’ blood over all our sins, and I command all unholy spirits to leave us now! Go, in Jesus’ name!</p>
-             <p>Fully restore all that the thief has stolen. Lord, I also ask that you remove the memory of all abuses and traumas any of us have experienced.</p>
-             <div style={styles.variableBlock}>{getList('abuse') || "(List specific traumas if needed)"}</div>
-             <p>I pray all of this in the Holy Name of Jesus. Amen.</p>
-           </div>
-        )}
-
+        {/* RECOVERY PRAYER (Integrated with Identify Phase) */}
         {activePrayer === 'RECOVERY' && (
            <div style={styles.prayerText}>
              <h1>3-Step Recovery Prayer</h1>
+             <div style={styles.nameInputBlock}>
+               <p><strong>Target Issue:</strong> {getLatestIssue()}</p>
+             </div>
              <p><em>Use this for immediate relief from an emotional outburst or pain.</em></p>
              <h3>Step 1: Reveal</h3>
-             <p>“Lord Jesus, I repent of my sins, and I ask you to help me recover. Please reveal any sin I need to repent of or person I need to forgive to set me free of this issue.”</p>
+             <p>“Lord Jesus, I repent of my sins, and I ask you to help me recover. Please reveal any sin I need to repent of or person I need to forgive to set me free of <strong>{getLatestIssue()}</strong>.”</p>
              <h3>Step 2: Repent</h3>
              <p>“I repent of _________ (name the sin).”</p>
              <p>“I forgive _________ (name the person).”</p>
              <h3>Step 3: Command</h3>
-             <p>“And in Jesus’ name, I now command the spirit of _________ (name the issue) to leave me, immediately. Go now, in Jesus’ name!”</p>
+             <p>“And in Jesus’ name, I now command the spirit of <strong>{getLatestIssue()}</strong> to leave me, immediately. Go now, in Jesus’ name!”</p>
+           </div>
+        )}
+        
+        {activePrayer === 'DAILY' && (
+           <div style={styles.prayerText}>
+             <h1>The Daily Prayer</h1>
+             <p>Heavenly Father, I come to you in Jesus’ name... I ask for your grace to help me deny myself, die to myself, be fully led by your Spirit.</p>
+             <p>I repent of my sins, I forgive each person who has hurt me, and I release all judgments against them:</p>
+             <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+             <p>I claim Jesus’ blood over all our sins, and I command all unholy spirits to leave us now! Go, in Jesus’ name!</p>
+             <p>I pray all of this in the Holy Name of Jesus. Amen.</p>
            </div>
         )}
         
@@ -446,6 +529,35 @@ function App() {
 // ------------------------------------------------
 // STYLES
 // ------------------------------------------------
+// VIEW: SETTINGS
+  if (view === 'SETTINGS') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Inter, sans-serif' }}>
+        <header style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', alignItems: 'center' }}>
+           <button onClick={() => setView('DASHBOARD')} style={{ background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold' }}>&larr; Back</button>
+           <h2 style={{ margin: 0, fontSize: '18px', fontFamily: 'Georgia, serif' }}>App Settings</h2>
+        </header>
+        <main style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center', padding: '20px' }}>
+           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
+             <h3>Data Management</h3>
+             <p style={{ color: '#666', marginBottom: '20px' }}>Clear all saved lists and reset the app. (Irreversible)</p>
+             <button onClick={() => {
+                if (window.confirm("Are you sure? This will delete all your lists.")) {
+                  localStorage.removeItem('freedom_inventory');
+                  localStorage.removeItem('freedom_issues');
+                  // window.location.reload(); // Hard reset
+                  alert("Data Cleared.");
+                  setView('LOGIN');
+                }
+             }} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Reset All Data</button>
+           </div>
+           <br />
+           <button onClick={() => setView('LOGIN')} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '10px' }}>🔒 Logout</button>
+        </main>
+      </div>
+    );
+  }
+
 const styles: { [key: string]: React.CSSProperties } = {
   // Layouts
   centerContainer: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6' },
@@ -459,9 +571,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   sidebarTitle: { fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' },
   
   // Content Logic
-  // Responsive check could be improved, but this works for desktop/mobile basic
   mainContent: { flex: 1, padding: '20px', backgroundColor: '#fff', minHeight: '100vh', marginLeft: '0' }, 
-  workArea: { maxWidth: '700px', margin: '0 auto', paddingBottom: '100px' }, // Extra padding for mobile scroll
+  workArea: { maxWidth: '700px', margin: '0 auto', paddingBottom: '100px' }, 
   workHeader: { marginBottom: '20px' },
   
   // Components
@@ -474,10 +585,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   inlineInput: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', marginLeft: '10px', width: '200px' },
   textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
   
-  // Mobile Friendly Buttons
   btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
-  btnSecondary: { backgroundColor: '#f3f4f6', color: '#9ca3af', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'not-allowed', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
-  btnDestructive: { backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px' },
+  btnSecondary: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
   
   btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px', padding: '10px' },
   backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '10px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px', padding: '10px' },
@@ -487,13 +596,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px', borderBottom: '1px solid #f3f4f6' },
   catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
   catNum: { display: 'inline-block', width: '30px', color: '#9ca3af', fontSize: '12px' },
-  
+  issueRow: { backgroundColor: 'white', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', marginBottom: '10px' },
+
   // Prayer Room Styles
   prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
   prayerHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
   prayerText: { fontSize: '18px', lineHeight: '1.8', color: '#1f2937', textAlign: 'left' },
   divider: { margin: '30px 0', border: 'none', borderTop: '1px solid #e5e7eb' },
   variableBlock: { backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '15px', margin: '15px 0', color: '#1e3a8a', whiteSpace: 'pre-wrap', borderRadius: '4px' },
+  variableBlockBlank: { backgroundColor: '#fff', border: '1px dashed #ccc', padding: '15px', margin: '15px 0', color: '#999', borderRadius: '4px' },
   nameInputBlock: { backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #e5e7eb', textAlign: 'center' },
 
   // Toggle
@@ -508,10 +619,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   textGray: { color: '#6b7280', marginBottom: '15px', fontSize: '14px' },
   tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px', display: 'inline-block' },
   instruction: { fontSize: '16px', color: '#4b5563', marginBottom: '20px', lineHeight: '1.5' },
-  stepBadge: { display: 'block', fontSize: '24px', color: '#d1d5db', fontWeight: 'bold', marginBottom: '10px' },
   stepBadgeActive: { display: 'block', fontSize: '24px', color: '#4f46e5', fontWeight: 'bold', marginBottom: '10px' },
   check: { color: '#10b981', marginLeft: '8px', fontWeight: 'bold' },
-  saveIndicator: { textAlign: 'right', marginTop: '10px', color: '#10b981', fontSize: '12px', fontWeight: 'bold' }
+  saveIndicator: { textAlign: 'right', marginTop: '10px', fontSize: '12px', fontWeight: 'bold' }
 };
 
 export default App;
