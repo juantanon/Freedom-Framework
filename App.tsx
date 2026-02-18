@@ -18,7 +18,7 @@ interface CategoryData {
   placeholder: string;
 }
 
-// The "Master List" from your Screenshots
+// The "Master List" 
 const CATEGORIES: CategoryData[] = [
   { id: 'parent_child', title: 'Parent-Child Relationship', videoNum: '#1', placeholder: 'List specific wounds from father or mother...' },
   { id: 'unforgiveness', title: 'Unforgiveness', videoNum: '#2', placeholder: 'List names of people to forgive...' },
@@ -43,12 +43,16 @@ function App() {
   // ------------------------------------------------
   // STATE
   // ------------------------------------------------
-  const [view, setView] = useState<'LOGIN' | 'DASHBOARD' | 'INVENTORY' | 'PRAYER_MENU' | 'PRAYER_ACTIVE'>('LOGIN');
+  const [view, setView] = useState<'LOGIN' | 'DASHBOARD' | 'INVENTORY' | 'PRAYER_MENU' | 'PRAYER_ACTIVE' | 'SETTINGS'>('LOGIN');
   const [passcode, setPasscode] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryData | null>(null);
   const [activePrayer, setActivePrayer] = useState<string>('');
   
-  // This stores your lists! 
+  // Prayer Mode State
+  const [prayerMode, setPrayerMode] = useState<'SELF' | 'OTHERS'>('SELF');
+  const [lovedOneName, setLovedOneName] = useState('');
+  
+  // Inventory Data
   const [inventory, setInventory] = useState<Record<string, string>>({});
 
   // LOAD SAVED DATA ON STARTUP
@@ -65,6 +69,16 @@ function App() {
     setInventory(newInventory);
     localStorage.setItem('freedom_inventory', JSON.stringify(newInventory));
   };
+  
+  // RESET DATA
+  const clearAllData = () => {
+    if (window.confirm("Are you sure? This will delete all your lists.")) {
+      localStorage.removeItem('freedom_inventory');
+      setInventory({});
+      alert("All data cleared.");
+      setView('DASHBOARD');
+    }
+  };
 
   const SECRET_CODE = "1234";
 
@@ -76,7 +90,7 @@ function App() {
     return val && val.trim().length > 0 ? val : "___________";
   };
 
-  // Aggregates all "Other" categories into one list for the general prayer
+  // Aggregates all "Other" categories
   const getCombinedOthers = () => {
     const mainKeys = ['unforgiveness', 'sexual_sin', 'occult'];
     const others = CATEGORIES.filter(c => !mainKeys.includes(c.id));
@@ -89,6 +103,11 @@ function App() {
     });
     return combined || "___________";
   };
+
+  // Dynamic Name Helper
+  const getName = () => prayerMode === 'OTHERS' && lovedOneName ? lovedOneName : "me";
+  const getHeShe = () => "he/she"; // Can be refined later
+  const getHimHer = () => "him/her";
 
   // ------------------------------------------------
   // LOGIN LOGIC
@@ -125,7 +144,7 @@ function App() {
       <div style={styles.layout}>
         <header style={styles.header}>
           <h2 style={styles.logo}>Freedom Framework</h2>
-          <button onClick={() => setView('LOGIN')} style={styles.btnText}>Lock</button>
+          <button onClick={() => setView('SETTINGS')} style={styles.btnText}>⚙️ Settings</button>
         </header>
         
         <main style={styles.main}>
@@ -164,13 +183,36 @@ function App() {
   }
 
   // ------------------------------------------------
+  // SETTINGS VIEW
+  // ------------------------------------------------
+  if (view === 'SETTINGS') {
+    return (
+      <div style={styles.layout}>
+        <header style={styles.header}>
+           <button onClick={() => setView('DASHBOARD')} style={styles.backBtn}>&larr; Back</button>
+           <h2 style={styles.logo}>App Settings</h2>
+        </header>
+        <main style={styles.main}>
+           <div style={styles.card}>
+             <h3>Data Management</h3>
+             <p style={styles.textGray}>Clear all saved lists and reset the app.</p>
+             <button onClick={clearAllData} style={styles.btnDestructive}>Reset All Data</button>
+           </div>
+           <br />
+           <button onClick={() => setView('LOGIN')} style={styles.btnText}>🔒 Logout</button>
+        </main>
+      </div>
+    );
+  }
+
+  // ------------------------------------------------
   // INVENTORY VIEW
   // ------------------------------------------------
   if (view === 'INVENTORY') {
     return (
       <div style={styles.layout}>
         <div style={styles.sidebar}>
-          <button onClick={() => setView('DASHBOARD')} style={styles.backBtn}>&larr; Back to Home</button>
+          <button onClick={() => setView('DASHBOARD')} style={styles.backBtn}>&larr; Home</button>
           <h3 style={styles.sidebarTitle}>Categories</h3>
           <div style={styles.scrollList}>
             {CATEGORIES.map(cat => (
@@ -228,7 +270,7 @@ function App() {
     return (
       <div style={styles.layout}>
         <header style={styles.header}>
-           <button onClick={() => setView('DASHBOARD')} style={styles.backBtn}>&larr; Back to Dashboard</button>
+           <button onClick={() => setView('DASHBOARD')} style={styles.backBtn}>&larr; Back</button>
            <h2 style={styles.logo}>Prayer Room</h2>
         </header>
 
@@ -267,44 +309,106 @@ function App() {
   return (
     <div style={styles.layout}>
       <div style={styles.prayerContainer}>
+        
+        {/* HEADER & TOGGLE */}
         <div style={styles.prayerHeader}>
-           <button onClick={() => setView('PRAYER_MENU')} style={styles.backBtn}>&larr; Change Prayer</button>
-           <button onClick={() => setView('INVENTORY')} style={styles.editBtn}>✎ Edit My Lists</button>
+           <button onClick={() => setView('PRAYER_MENU')} style={styles.backBtn}>&larr; Exit</button>
+           <div style={styles.toggleContainer}>
+             <button 
+               style={prayerMode === 'SELF' ? styles.toggleActive : styles.toggle}
+               onClick={() => setPrayerMode('SELF')}
+             >
+               For Me
+             </button>
+             <button 
+               style={prayerMode === 'OTHERS' ? styles.toggleActive : styles.toggle}
+               onClick={() => setPrayerMode('OTHERS')}
+             >
+               For Loved One
+             </button>
+           </div>
+           <button onClick={() => setView('INVENTORY')} style={styles.editBtn}>✎ Lists</button>
         </div>
 
-        {activePrayer === 'FREEDOM' && (
-          <div style={styles.prayerText}>
-            <h1>The Prayer of Freedom (Personal)</h1>
-            <p><strong>Instructions:</strong> Read out loud. The names and issues you listed in your Inventory have been added below.</p>
-            <hr style={styles.divider}/>
-            
-            <p>“Lord Jesus, I repent of my sins. I want freedom from my burdens and I ask you to help me. Please bring to mind any sin I need to repent of or a person I need to forgive to set me free.</p>
-            
-            <h3>1. Unforgiveness</h3>
-            <p>“I repent of unforgiveness, for I know that it is a sin. I therefore choose to forgive, release all judgments against, and break all unholy soul ties with the following people:</p>
-            <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
-
-            <h3>2. Sexual Sin</h3>
-            <p>“I repent of my sexual sins with the following people. I break all unholy blood contracts with each one, and I renounce and break all unholy soul ties with them, including:</p>
-            <div style={styles.variableBlock}>{getList('sexual_sin')}</div>
-            <p>I break all unholy soul ties with their sexual partners and all my other sexual partners I may not recall.</p>
-
-            <h3>3. Occult & False Religions</h3>
-            <p>“I repent of and renounce all occult activity I have engaged in, including:</p>
-            <div style={styles.variableBlock}>{getList('occult')}</div>
-            <p>And I break all unholy soul ties with those who encouraged me to do those activities.</p>
-
-            <h3>4. Other Sins & Roots</h3>
-            <p>“I also repent of these specific areas I have identified (Idolatry, Vows, Pride, etc):</p>
-            <div style={styles.variableBlock}>{getCombinedOthers()}</div>
-            <p>And I break all unholy soul ties with anyone involved in these sins.</p>
-
-            <h3>Closing Command</h3>
-            <p>“And now, in Jesus’ name, I command every unholy spirit to leave me immediately. I declare you have no further right to me, and I command you to go now, in Jesus’ name, and go where Jesus tells you to go.</p>
-            <p>“Lord Jesus, I now ask that you enforce my freedom from the curse of sin. I ask that you remove all unholy spirits from my life right now and set me free. Amen!”</p>
+        {/* LOVED ONE NAME INPUT */}
+        {prayerMode === 'OTHERS' && (
+          <div style={styles.nameInputBlock}>
+            <p>Who are you praying for today?</p>
+            <input 
+              type="text" 
+              placeholder="Enter their name..." 
+              value={lovedOneName}
+              onChange={(e) => setLovedOneName(e.target.value)}
+              style={styles.inlineInput}
+            />
           </div>
         )}
 
+        {activePrayer === 'FREEDOM' && (
+          <div style={styles.prayerText}>
+            <h1>The Prayer of Freedom {prayerMode === 'OTHERS' ? `(For ${getName()})` : "(Personal)"}</h1>
+            <p><strong>Instructions:</strong> Read out loud. The names and issues you listed in your Inventory have been added below.</p>
+            <hr style={styles.divider}/>
+            
+            {prayerMode === 'SELF' ? (
+              // ---------------- SELF PRAYER ----------------
+              <>
+                <p>“Lord Jesus, I repent of my sins. I want freedom from my burdens and I ask you to help me. Please bring to mind any sin I need to repent of or a person I need to forgive to set me free.</p>
+                
+                <h3>1. Unforgiveness</h3>
+                <p>“I repent of unforgiveness, for I know that it is a sin. I therefore choose to forgive, release all judgments against, and break all unholy soul ties with the following people:</p>
+                <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+
+                <h3>2. Sexual Sin</h3>
+                <p>“I repent of my sexual sins with the following people. I break all unholy blood contracts with each one, and I renounce and break all unholy soul ties with them, including:</p>
+                <div style={styles.variableBlock}>{getList('sexual_sin')}</div>
+                <p>I break all unholy soul ties with their sexual partners and all my other sexual partners I may not recall.</p>
+
+                <h3>3. Occult & False Religions</h3>
+                <p>“I repent of and renounce all occult activity I have engaged in, including:</p>
+                <div style={styles.variableBlock}>{getList('occult')}</div>
+                <p>And I break all unholy soul ties with those who encouraged me to do those activities.</p>
+
+                <h3>4. Other Sins & Roots</h3>
+                <p>“I also repent of these specific areas I have identified (Idolatry, Vows, Pride, etc):</p>
+                <div style={styles.variableBlock}>{getCombinedOthers()}</div>
+                <p>And I break all unholy soul ties with anyone involved in these sins.</p>
+
+                <h3>Closing Command</h3>
+                <p>“And now, in Jesus’ name, I command every unholy spirit to leave me immediately. I declare you have no further right to me, and I command you to go now, in Jesus’ name, and go where Jesus tells you to go.</p>
+                <p>“Lord Jesus, I now ask that you enforce my freedom from the curse of sin. I ask that you remove all unholy spirits from my life right now and set me free. Amen!”</p>
+              </>
+            ) : (
+              // ---------------- LOVED ONE PRAYER ----------------
+              <>
+                 <p>“Lord Jesus, I come before you on <strong>{getName()}'s</strong> behalf to help {getHimHer()} with their burdens. Please bring to mind any sin I need to repent of or person I need to forgive on {getName()}'s behalf to set {getHimHer()} free.</p>
+
+                 <h3>1. Unforgiveness</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of unforgiveness, for that it is a sin. I, therefore, declare that {getHeShe()} chooses to forgive, release all judgments against, and break all unholy soul ties with those held unforgiveness towards, including:</p>
+                 <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+
+                 <h3>2. Sexual Sin</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of sexual sins, I break all unholy blood contracts with each one, and I renounce and break all unholy soul ties with each sexual sin partner, including:</p>
+                 <div style={styles.variableBlock}>{getList('sexual_sin')}</div>
+                 <p>I also declare on {getName()}'s behalf that {getHeShe()} breaks all unholy soul ties with their sexual partners and all other sexual partners I may not have listed.</p>
+
+                 <h3>3. Occult</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I repent of and renounce all occult activity engaged in, including:</p>
+                 <div style={styles.variableBlock}>{getList('occult')}</div>
+                 
+                 <h3>4. Other Sins</h3>
+                 <p>“On <strong>{getName()}'s</strong> behalf: I also repent of other sins and roots, including:</p>
+                 <div style={styles.variableBlock}>{getCombinedOthers()}</div>
+
+                 <h3>Closing Command</h3>
+                 <p>“And now, in Jesus’ name, I command every unholy spirit to leave <strong>{getName()}</strong> immediately. I declare you have no further right to {getName()}, and I command you to go now, in Jesus’ name, and go where Jesus tells you to go.</p>
+                 <p>“Lord Jesus, I now ask that you enforce {getName()}'s freedom from the curse of sin. I ask that you remove all unholy spirits from {getName()}'s life right now and set {getName()} free. Amen!”</p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ... (Other Prayers remain the same) ... */}
         {activePrayer === 'DAILY' && (
            <div style={styles.prayerText}>
              <h1>The Daily Prayer</h1>
@@ -346,49 +450,61 @@ const styles: { [key: string]: React.CSSProperties } = {
   // Layouts
   centerContainer: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6' },
   layout: { display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Inter, sans-serif' },
-  header: { padding: '20px 40px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', alignItems: 'center' },
-  main: { maxWidth: '900px', margin: '40px auto', textAlign: 'center', padding: '20px', width: '100%' },
+  header: { padding: '20px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', alignItems: 'center', backgroundColor: '#fff', position: 'sticky', top: 0, zIndex: 10 },
+  main: { maxWidth: '900px', margin: '20px auto', textAlign: 'center', padding: '20px', width: '100%' },
   
   // Sidebar
-  sidebar: { width: '300px', backgroundColor: '#f8f9fa', borderRight: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0 },
+  sidebar: { width: '300px', backgroundColor: '#f8f9fa', borderRight: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 20 },
   scrollList: { overflowY: 'auto', flex: 1, marginTop: '20px' },
   sidebarTitle: { fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' },
   
   // Content Logic
-  mainContent: { marginLeft: '300px', padding: '60px', backgroundColor: '#fff', minHeight: '100vh' }, 
-  workArea: { maxWidth: '700px', margin: '0 auto' },
+  // Responsive check could be improved, but this works for desktop/mobile basic
+  mainContent: { flex: 1, padding: '20px', backgroundColor: '#fff', minHeight: '100vh', marginLeft: '0' }, 
+  workArea: { maxWidth: '700px', margin: '0 auto', paddingBottom: '100px' }, // Extra padding for mobile scroll
   workHeader: { marginBottom: '20px' },
   
   // Components
-  card: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', width: '300px', border: '1px solid #eee' },
-  cardActive: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', border: '2px solid #4f46e5', width: '300px', boxShadow: '0 4px 15px rgba(79, 70, 229, 0.1)' },
-  grid: { display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '40px', flexWrap: 'wrap' },
+  card: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', width: '100%', maxWidth: '300px', border: '1px solid #eee', margin: '10px' },
+  cardActive: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', border: '2px solid #4f46e5', width: '100%', maxWidth: '300px', boxShadow: '0 4px 15px rgba(79, 70, 229, 0.1)', margin: '10px' },
+  grid: { display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' },
   
   // Inputs & Buttons
-  input: { width: '100%', padding: '12px', margin: '15px 0', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center' },
+  input: { width: '100%', padding: '16px', margin: '15px 0', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center' },
+  inlineInput: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', marginLeft: '10px', width: '200px' },
   textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
-  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px' },
-  btnSecondary: { backgroundColor: '#f3f4f6', color: '#9ca3af', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'not-allowed', fontWeight: 'bold', width: '100%', marginTop: '10px' },
-  btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer' },
-  backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '20px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px' },
-  editBtn: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' },
+  
+  // Mobile Friendly Buttons
+  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
+  btnSecondary: { backgroundColor: '#f3f4f6', color: '#9ca3af', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'not-allowed', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
+  btnDestructive: { backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px' },
+  
+  btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px', padding: '10px' },
+  backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '10px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px', padding: '10px' },
+  editBtn: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
 
   // List Items
-  catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '12px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px' },
-  catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '12px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
+  catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px', borderBottom: '1px solid #f3f4f6' },
+  catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
   catNum: { display: 'inline-block', width: '30px', color: '#9ca3af', fontSize: '12px' },
   
   // Prayer Room Styles
-  prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '40px' },
-  prayerHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '40px' },
-  prayerText: { fontSize: '18px', lineHeight: '1.8', color: '#1f2937' },
+  prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
+  prayerHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
+  prayerText: { fontSize: '18px', lineHeight: '1.8', color: '#1f2937', textAlign: 'left' },
   divider: { margin: '30px 0', border: 'none', borderTop: '1px solid #e5e7eb' },
   variableBlock: { backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '15px', margin: '15px 0', color: '#1e3a8a', whiteSpace: 'pre-wrap', borderRadius: '4px' },
+  nameInputBlock: { backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #e5e7eb', textAlign: 'center' },
+
+  // Toggle
+  toggleContainer: { display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' },
+  toggle: { padding: '8px 16px', border: 'none', backgroundColor: 'transparent', color: '#6b7280', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px' },
+  toggleActive: { padding: '8px 16px', border: 'none', backgroundColor: 'white', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
 
   // Typography
   serifTitle: { fontFamily: 'Georgia, serif', color: '#111827', margin: 0 },
-  bigTitle: { fontFamily: 'Georgia, serif', fontSize: '36px', color: '#111827', marginBottom: '10px' },
-  subtitle: { color: '#6b7280', fontSize: '18px' },
+  bigTitle: { fontFamily: 'Georgia, serif', fontSize: '32px', color: '#111827', marginBottom: '10px' },
+  subtitle: { color: '#6b7280', fontSize: '16px' },
   textGray: { color: '#6b7280', marginBottom: '15px', fontSize: '14px' },
   tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px', display: 'inline-block' },
   instruction: { fontSize: '16px', color: '#4b5563', marginBottom: '20px', lineHeight: '1.5' },
