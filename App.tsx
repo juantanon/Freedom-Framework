@@ -23,8 +23,8 @@ interface Issue {
   text: string;
   date: string;
   initialIntensity: number;
-  intensity3Days?: number; // Optional: specific check-in
-  intensity30Days?: number; // Optional: specific check-in
+  intensity3Days?: number; 
+  intensity30Days?: number; 
 }
 
 // The "Master List" 
@@ -60,6 +60,7 @@ function App() {
   // Prayer Mode State
   const [prayerMode, setPrayerMode] = useState<'SELF' | 'OTHERS'>('SELF');
   const [lovedOneName, setLovedOneName] = useState('');
+  const [prayerTarget, setPrayerTarget] = useState(''); // Specific issue being prayed for
   
   // DATA: Inventory (Phase 2)
   const [inventory, setInventory] = useState<Record<string, string>>({});
@@ -121,6 +122,13 @@ function App() {
     localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
   };
   
+  // Trigger SIMPLIFIED prayer for a specific issue
+  const startSimplifiedPrayer = (issueText: string) => {
+    setPrayerTarget(issueText);
+    setActivePrayer('SIMPLIFIED'); // Changed from RECOVERY to SIMPLIFIED logic
+    setView('PRAYER_ACTIVE');
+  };
+  
   const SECRET_CODE = "1234";
 
   // ------------------------------------------------
@@ -149,9 +157,11 @@ function App() {
     return combined || "___________";
   };
 
-  const getLatestIssue = () => {
+  const getTargetIssue = () => {
+    // If we selected a specific target, use it. Otherwise default to "my issues"
+    if (prayerTarget) return prayerTarget;
     if (issues.length > 0) return issues[0].text;
-    return "this issue";
+    return "my issues";
   };
 
   const getName = () => prayerMode === 'OTHERS' && lovedOneName ? lovedOneName : "me";
@@ -326,17 +336,22 @@ function App() {
                         )}
                       </div>
                     </div>
-
                   </div>
+                  
+                  {/* INDIVIDUAL PRAYER BUTTON */}
+                  <div style={{marginLeft: '20px'}}>
+                     <button 
+                       onClick={() => startSimplifiedPrayer(issue.text)}
+                       style={styles.btnSmall}
+                     >
+                       Pray &rarr;
+                     </button>
+                  </div>
+                  
                 </div>
               ))}
             </div>
             
-            {issues.length > 0 && (
-               <button onClick={() => { setActivePrayer('RECOVERY'); setView('PRAYER_ACTIVE'); }} style={styles.btnSecondary}>
-                 Go to Recovery Prayer for "{issues[0].text}" &rarr;
-               </button>
-            )}
           </div>
         </main>
       </div>
@@ -463,11 +478,11 @@ function App() {
               <button onClick={() => { setActivePrayer('DAILY'); setView('PRAYER_ACTIVE'); }} style={styles.btnPrimary}>Start Prayer</button>
             </div>
 
-            {/* PRAYER 3: 3-STEP */}
+            {/* PRAYER 3: SIMPLIFIED */}
             <div style={styles.cardActive}>
-              <h3>3-Step Recovery</h3>
-              <p style={styles.textGray}>Quick prayer for immediate issues (Anxiety, Pain, etc).</p>
-              <button onClick={() => { setActivePrayer('RECOVERY'); setView('PRAYER_ACTIVE'); }} style={styles.btnPrimary}>Start Prayer</button>
+              <h3>Simplified Prayer</h3>
+              <p style={styles.textGray}>Target specific issues (Anxiety, etc) with a condensed prayer.</p>
+              <button onClick={() => { setPrayerTarget(''); setActivePrayer('SIMPLIFIED'); setView('PRAYER_ACTIVE'); }} style={styles.btnPrimary}>Start Prayer</button>
             </div>
           </div>
         </main>
@@ -518,6 +533,7 @@ function App() {
           </div>
         )}
 
+        {/* 1. FREEDOM PRAYER (FULL) */}
         {activePrayer === 'FREEDOM' && (
           <div style={styles.prayerText}>
             <h1>The Prayer of Freedom {prayerMode === 'OTHERS' ? `(For ${getName()})` : "(Personal)"}</h1>
@@ -578,24 +594,69 @@ function App() {
           </div>
         )}
 
-        {/* RECOVERY PRAYER (Integrated with Identify Phase) */}
-        {activePrayer === 'RECOVERY' && (
+        {/* 2. SIMPLIFIED PRAYER (TARGETED) */}
+        {activePrayer === 'SIMPLIFIED' && (
            <div style={styles.prayerText}>
-             <h1>3-Step Recovery Prayer</h1>
+             <h1>Simplified Prayer</h1>
              <div style={styles.nameInputBlock}>
-               <p><strong>Target Issue:</strong> {getLatestIssue()}</p>
+               <p><strong>Targeting:</strong> {getTargetIssue()}</p>
              </div>
-             <p><em>Use this for immediate relief from an emotional outburst or pain.</em></p>
-             <h3>Step 1: Reveal</h3>
-             <p>“Lord Jesus, I repent of my sins, and I ask you to help me recover. Please reveal any sin I need to repent of or person I need to forgive to set me free of <strong>{getLatestIssue()}</strong>.”</p>
-             <h3>Step 2: Repent</h3>
-             <p>“I repent of _________ (name the sin).”</p>
-             <p>“I forgive _________ (name the person).”</p>
-             <h3>Step 3: Command</h3>
-             <p>“And in Jesus’ name, I now command the spirit of <strong>{getLatestIssue()}</strong> to leave me, immediately. Go now, in Jesus’ name!”</p>
+
+             {prayerMode === 'SELF' ? (
+               <>
+                 <p>“Lord Jesus, I repent of my sins. I want freedom from <strong>{getTargetIssue()}</strong> and I ask you to help me. Please bring to mind any sin I need to repent of or a person I need to forgive to set me free.</p>
+                 
+                 <h3>Unforgiveness</h3>
+                 <p>“I repent of unforgiveness. I choose to forgive, release judgments, and break unholy soul ties with:</p>
+                 <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+
+                 <h3>Sexual Sin</h3>
+                 <p>“I repent of my sexual sins. I break blood contracts and unholy soul ties with:</p>
+                 <div style={styles.variableBlock}>{getList('sexual_sin')}</div>
+
+                 <h3>Occult</h3>
+                 <p>“I repent of and renounce all occult activity, including:</p>
+                 <div style={styles.variableBlock}>{getList('occult')}</div>
+
+                 <h3>Other Sins</h3>
+                 <p>“I also repent of other sins and roots:</p>
+                 <div style={styles.variableBlock}>{getCombinedOthers()}</div>
+
+                 <h3>Closing Command</h3>
+                 <p>“And now, in Jesus’ name, I command every unholy spirit to leave me immediately.</p>
+                 <p>“I also speak to the spirit of <strong>{getTargetIssue()}</strong> and I command you to go as well. Go now, in Jesus’s name.</p>
+                 <p>“Lord Jesus, I now ask that you enforce my freedom from the curse of sin. I ask that you remove all unholy spirits from my life right now and set me free. Amen!”</p>
+               </>
+             ) : (
+                <>
+                  <p>“Lord Jesus, I come before you on <strong>{getName()}'s</strong> behalf to help {getHimHer()} with <strong>{getTargetIssue()}</strong>. Please bring to mind any sin I need to repent of on {getName()}'s behalf.</p>
+                  
+                  <h3>Unforgiveness</h3>
+                  <p>“On {getName()}'s behalf: I repent of unforgiveness. I declare that {getHeShe()} chooses to forgive:</p>
+                  <div style={styles.variableBlockBlank}>_______________________________</div>
+
+                  <h3>Sexual Sin</h3>
+                  <p>“On {getName()}'s behalf: I repent of sexual sins and break soul ties with:</p>
+                  <div style={styles.variableBlockBlank}>_______________________________</div>
+
+                  <h3>Occult</h3>
+                  <p>“On {getName()}'s behalf: I repent of and renounce all occult activity, including:</p>
+                  <div style={styles.variableBlockBlank}>_______________________________</div>
+
+                  <h3>Other Sins</h3>
+                  <p>“On {getName()}'s behalf: I repent of other sins:</p>
+                  <div style={styles.variableBlockBlank}>_______________________________</div>
+
+                  <h3>Closing Command</h3>
+                  <p>“And now, in Jesus’ name, I command every unholy spirit to leave {getName()} immediately.</p>
+                  <p>“I also speak to the spirit of <strong>{getTargetIssue()}</strong> and I command you to go as well. Go now, in Jesus’s name.</p>
+                  <p>“Lord Jesus, I ask that you enforce {getName()}'s freedom from the curse of sin. Set {getName()} free right now. Amen!”</p>
+                </>
+             )}
            </div>
         )}
         
+        {/* 3. DAILY PRAYER */}
         {activePrayer === 'DAILY' && (
            <div style={styles.prayerText}>
              <h1>The Daily Prayer</h1>
@@ -697,6 +758,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   
   btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
   btnSecondary: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
+  btnSmall: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
   
   btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px', padding: '10px' },
   backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '10px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px', padding: '10px' },
