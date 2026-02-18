@@ -627,4 +627,43 @@ const styles: { [key: string]: React.CSSProperties } = {
   inlineInput: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', marginLeft: '10px', width: '200px' },
   textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
   
-  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%',
+  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
+  btnSecondary: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
+  
+  btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px', padding: '10px' },
+  backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '10px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px', padding: '10px' },
+  editBtn: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
+
+  // List Items
+  catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px', borderBottom: '1px solid #f3f4f6' },
+  catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
+  catNum: { display: 'inline-block', width: '30px', color: '#9ca3af', fontSize: '12px' },
+  issueRow: { backgroundColor: 'white', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', marginBottom: '10px' },
+
+  // Prayer Room Styles
+  prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
+  prayerHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
+  prayerText: { fontSize: '18px', lineHeight: '1.8', color: '#1f2937', textAlign: 'left' },
+  divider: { margin: '30px 0', border: 'none', borderTop: '1px solid #e5e7eb' },
+  variableBlock: { backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '15px', margin: '15px 0', color: '#1e3a8a', whiteSpace: 'pre-wrap', borderRadius: '4px' },
+  variableBlockBlank: { backgroundColor: '#fff', border: '1px dashed #ccc', padding: '15px', margin: '15px 0', color: '#999', borderRadius: '4px' },
+  nameInputBlock: { backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #e5e7eb', textAlign: 'center' },
+
+  // Toggle
+  toggleContainer: { display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' },
+  toggle: { padding: '8px 16px', border: 'none', backgroundColor: 'transparent', color: '#6b7280', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px' },
+  toggleActive: { padding: '8px 16px', border: 'none', backgroundColor: 'white', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
+
+  // Typography
+  serifTitle: { fontFamily: 'Georgia, serif', color: '#111827', margin: 0 },
+  bigTitle: { fontFamily: 'Georgia, serif', fontSize: '32px', color: '#111827', marginBottom: '10px' },
+  subtitle: { color: '#6b7280', fontSize: '16px' },
+  textGray: { color: '#6b7280', marginBottom: '15px', fontSize: '14px' },
+  tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px', display: 'inline-block' },
+  instruction: { fontSize: '16px', color: '#4b5563', marginBottom: '20px', lineHeight: '1.5' },
+  stepBadgeActive: { display: 'block', fontSize: '24px', color: '#4f46e5', fontWeight: 'bold', marginBottom: '10px' },
+  check: { color: '#10b981', marginLeft: '8px', fontWeight: 'bold' },
+  saveIndicator: { textAlign: 'right', marginTop: '10px', fontSize: '12px', fontWeight: 'bold' }
+};
+
+export default App;
