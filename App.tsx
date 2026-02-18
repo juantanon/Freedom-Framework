@@ -21,8 +21,10 @@ interface CategoryData {
 interface Issue {
   id: number;
   text: string;
-  intensity: number; // 0-10
   date: string;
+  initialIntensity: number;
+  intensity3Days?: number; // Optional: specific check-in
+  intensity30Days?: number; // Optional: specific check-in
 }
 
 // The "Master List" 
@@ -91,7 +93,7 @@ function App() {
     const newIssue: Issue = {
       id: Date.now(),
       text: newIssueText,
-      intensity: newIssueIntensity,
+      initialIntensity: newIssueIntensity,
       date: new Date().toLocaleDateString()
     };
     const updatedIssues = [newIssue, ...issues];
@@ -99,6 +101,18 @@ function App() {
     localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
     setNewIssueText('');
     setNewIssueIntensity(5);
+  };
+
+  const updateIssueProgress = (id: number, field: '3day' | '30day', value: number) => {
+    const updatedIssues = issues.map(issue => {
+      if (issue.id === id) {
+        if (field === '3day') return { ...issue, intensity3Days: value };
+        if (field === '30day') return { ...issue, intensity30Days: value };
+      }
+      return issue;
+    });
+    setIssues(updatedIssues);
+    localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
   };
 
   const deleteIssue = (id: number) => {
@@ -191,7 +205,7 @@ function App() {
             <div style={styles.cardActive}>
               <span style={styles.stepBadgeActive}>01</span>
               <h3>Identify</h3>
-              <p style={styles.textGray}>Log current burdens & intensity.</p>
+              <p style={styles.textGray}>Log current burdens & tracking.</p>
               <button onClick={() => setView('IDENTIFY')} style={styles.btnPrimary}>
                 Open Issue Tracker &rarr;
               </button>
@@ -235,25 +249,31 @@ function App() {
         <main style={styles.main}>
           <div style={styles.workArea}>
             <h1>What is troubling you?</h1>
-            <p style={styles.instruction}>Name the issue (e.g. Anxiety, Back Pain) and rate the intensity.</p>
+            <p style={styles.instruction}>
+              <strong>Instructions:</strong> Name the issue (e.g. Anxiety, Back Pain) and rate its intensity level (0-10). 
+              Come back in 3 days and 30 days to update the intensity score.
+            </p>
             
             <div style={styles.inputGroup}>
               <input 
                 type="text" 
-                placeholder="Name the issue..." 
+                placeholder="Name the issue (Press Enter to log)..." 
                 value={newIssueText}
                 onChange={(e) => setNewIssueText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addIssue()}
                 style={styles.input}
               />
-              <div style={{marginBottom: '20px'}}>
-                <label style={{fontWeight: 'bold', display: 'block', marginBottom: '10px'}}>Intensity (0-10): {newIssueIntensity}</label>
-                <input 
-                  type="range" 
-                  min="0" max="10" 
+              <div style={{marginBottom: '20px', textAlign: 'left'}}>
+                <label style={{fontWeight: 'bold', display: 'block', marginBottom: '10px'}}>Initial Intensity (0-10):</label>
+                <select 
                   value={newIssueIntensity}
                   onChange={(e) => setNewIssueIntensity(parseInt(e.target.value))}
-                  style={{width: '100%'}}
-                />
+                  style={styles.selectInput}
+                >
+                  {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
+                    <option key={n} value={n}>{n} - {n===10 ? 'Severe' : n===0 ? 'None' : ''}</option>
+                  ))}
+                </select>
               </div>
               <button onClick={addIssue} style={styles.btnPrimary}>Log Issue</button>
             </div>
@@ -263,12 +283,51 @@ function App() {
               {issues.length === 0 && <p style={{color: '#999', fontStyle: 'italic'}}>No issues logged yet.</p>}
               {issues.map(issue => (
                 <div key={issue.id} style={styles.issueRow}>
-                  <div>
-                    <span style={{fontWeight: 'bold', fontSize: '18px'}}>{issue.text}</span>
-                    <br/>
-                    <span style={{fontSize: '12px', color: '#666'}}>{issue.date} • Level: {issue.intensity}/10</span>
+                  <div style={{flex: 1}}>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                      <span style={{fontWeight: 'bold', fontSize: '18px'}}>{issue.text}</span>
+                      <button onClick={() => deleteIssue(issue.id)} style={{color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontSize:'20px'}}>×</button>
+                    </div>
+                    <p style={{fontSize: '12px', color: '#666', margin: '5px 0'}}>Logged on: {issue.date}</p>
+                    
+                    <div style={styles.trackerGrid}>
+                      <div style={styles.trackerItem}>
+                        <span style={styles.trackerLabel}>Initial</span>
+                        <div style={styles.trackerScore}>{issue.initialIntensity}</div>
+                      </div>
+                      
+                      <div style={styles.trackerItem}>
+                        <span style={styles.trackerLabel}>3-Day Check</span>
+                        {issue.intensity3Days !== undefined ? (
+                           <div style={styles.trackerScoreUpdated}>{issue.intensity3Days}</div>
+                        ) : (
+                          <select 
+                            style={styles.miniSelect}
+                            onChange={(e) => updateIssueProgress(issue.id, '3day', parseInt(e.target.value))}
+                          >
+                            <option value="">Update...</option>
+                            {[0,1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        )}
+                      </div>
+
+                      <div style={styles.trackerItem}>
+                        <span style={styles.trackerLabel}>30-Day Check</span>
+                        {issue.intensity30Days !== undefined ? (
+                           <div style={styles.trackerScoreUpdated}>{issue.intensity30Days}</div>
+                        ) : (
+                          <select 
+                            style={styles.miniSelect}
+                            onChange={(e) => updateIssueProgress(issue.id, '30day', parseInt(e.target.value))}
+                          >
+                            <option value="">Update...</option>
+                            {[0,1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        )}
+                      </div>
+                    </div>
+
                   </div>
-                  <button onClick={() => deleteIssue(issue.id)} style={{color: 'red', border: 'none', background: 'none', cursor: 'pointer'}}>×</button>
                 </div>
               ))}
             </div>
@@ -631,6 +690,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   
   // Inputs & Buttons
   input: { width: '100%', padding: '16px', margin: '15px 0', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center' },
+  selectInput: { width: '100%', padding: '16px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center', backgroundColor: 'white' },
+  miniSelect: { padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' },
   inlineInput: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', marginLeft: '10px', width: '200px' },
   textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
   
@@ -645,7 +706,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px', borderBottom: '1px solid #f3f4f6' },
   catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
   catNum: { display: 'inline-block', width: '30px', color: '#9ca3af', fontSize: '12px' },
-  issueRow: { backgroundColor: 'white', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', marginBottom: '10px' },
+  
+  // Issue Tracker Styles
+  issueRow: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', marginBottom: '15px' },
+  trackerGrid: { display: 'flex', gap: '20px', marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px' },
+  trackerItem: { flex: 1, textAlign: 'center' as const },
+  trackerLabel: { display: 'block', fontSize: '12px', textTransform: 'uppercase' as const, color: '#9ca3af', marginBottom: '5px', fontWeight: 'bold' },
+  trackerScore: { fontSize: '24px', fontWeight: 'bold', color: '#4f46e5' },
+  trackerScoreUpdated: { fontSize: '24px', fontWeight: 'bold', color: '#10b981' },
 
   // Prayer Room Styles
   prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
