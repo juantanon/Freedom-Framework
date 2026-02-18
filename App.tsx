@@ -60,7 +60,7 @@ function App() {
   // Prayer Mode State
   const [prayerMode, setPrayerMode] = useState<'SELF' | 'OTHERS'>('SELF');
   const [lovedOneName, setLovedOneName] = useState('');
-  const [prayerTarget, setPrayerTarget] = useState(''); // Specific issue being prayed for
+  const [prayerTarget, setPrayerTarget] = useState(''); // Specific issue(s) being prayed for
   
   // DATA: Inventory (Phase 2)
   const [inventory, setInventory] = useState<Record<string, string>>({});
@@ -125,9 +125,19 @@ function App() {
   // Trigger SIMPLIFIED prayer for a specific issue
   const startSimplifiedPrayer = (issueText: string) => {
     setPrayerTarget(issueText);
-    setActivePrayer('SIMPLIFIED'); // Changed from RECOVERY to SIMPLIFIED logic
+    setActivePrayer('SIMPLIFIED'); 
     setView('PRAYER_ACTIVE');
   };
+
+  // Trigger SIMPLIFIED prayer for ALL issues
+  const startAllIssuesPrayer = () => {
+    if (issues.length === 0) return;
+    // Combine all issue texts into one string
+    const combinedIssues = issues.map(i => i.text).join(', ');
+    setPrayerTarget(combinedIssues);
+    setActivePrayer('SIMPLIFIED');
+    setView('PRAYER_ACTIVE');
+  }
   
   const SECRET_CODE = "1234";
 
@@ -158,10 +168,14 @@ function App() {
   };
 
   const getTargetIssue = () => {
-    // If we selected a specific target, use it. Otherwise default to "my issues"
     if (prayerTarget) return prayerTarget;
     if (issues.length > 0) return issues[0].text;
     return "my issues";
+  };
+  
+  // Helper to determine singular/plural for the prayer command
+  const getSpiritLabel = () => {
+    return prayerTarget.includes(',') ? "spirits" : "spirit";
   };
 
   const getName = () => prayerMode === 'OTHERS' && lovedOneName ? lovedOneName : "me";
@@ -290,6 +304,17 @@ function App() {
 
             <div style={{marginTop: '40px', textAlign: 'left'}}>
               <h3>Recent Issues</h3>
+              
+              {/* PRAY FOR ALL BUTTON */}
+              {issues.length > 1 && (
+                <button 
+                  onClick={startAllIssuesPrayer}
+                  style={styles.btnGrand}
+                >
+                  ✨ Pray for ALL {issues.length} Issues at Once &rarr;
+                </button>
+              )}
+
               {issues.length === 0 && <p style={{color: '#999', fontStyle: 'italic'}}>No issues logged yet.</p>}
               {issues.map(issue => (
                 <div key={issue.id} style={styles.issueRow}>
@@ -624,7 +649,7 @@ function App() {
 
                  <h3>Closing Command</h3>
                  <p>“And now, in Jesus’ name, I command every unholy spirit to leave me immediately.</p>
-                 <p>“I also speak to the spirit of <strong>{getTargetIssue()}</strong> and I command you to go as well. Go now, in Jesus’s name.</p>
+                 <p>“I also speak to the <strong>{getSpiritLabel()}</strong> of <strong>{getTargetIssue()}</strong> and I command you to go as well. Go now, in Jesus’s name.</p>
                  <p>“Lord Jesus, I now ask that you enforce my freedom from the curse of sin. I ask that you remove all unholy spirits from my life right now and set me free. Amen!”</p>
                </>
              ) : (
@@ -649,7 +674,7 @@ function App() {
 
                   <h3>Closing Command</h3>
                   <p>“And now, in Jesus’ name, I command every unholy spirit to leave {getName()} immediately.</p>
-                  <p>“I also speak to the spirit of <strong>{getTargetIssue()}</strong> and I command you to go as well. Go now, in Jesus’s name.</p>
+                  <p>“I also speak to the <strong>{getSpiritLabel()}</strong> of <strong>{getTargetIssue()}</strong> and I command you to go as well. Go now, in Jesus’s name.</p>
                   <p>“Lord Jesus, I ask that you enforce {getName()}'s freedom from the curse of sin. Set {getName()} free right now. Amen!”</p>
                 </>
              )}
@@ -757,6 +782,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
   
   btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
+  btnGrand: { backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '20px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', width: '100%', marginBottom: '30px', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)' },
   btnSecondary: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
   btnSmall: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
   
