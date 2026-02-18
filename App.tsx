@@ -113,10 +113,7 @@ function App() {
   // HELPERS FOR PRAYER INJECTION
   // ------------------------------------------------
   const getList = (key: string) => {
-    // If praying for others, return a blank line (The "Guest Mode")
     if (prayerMode === 'OTHERS') return "____________________";
-    
-    // If praying for self, pull from saved data
     const val = inventory[key];
     return val && val.trim().length > 0 ? val : "___________";
   };
@@ -127,7 +124,13 @@ function App() {
     const others = CATEGORIES.filter(c => !mainKeys.includes(c.id));
     let combined = "";
     others.forEach(cat => {
-      if (inventory[cat.id]) combined += `\n• [${cat.title}]: ${inventory[cat.id]}`;
+      // For Word Curses, we only want the LIES (the standard inventory key), not the Truths
+      if (cat.id === 'word_curses' && inventory['word_curses']) {
+         combined += `\n• [Word Curses]: ${inventory['word_curses']}`;
+      }
+      else if (inventory[cat.id]) {
+        combined += `\n• [${cat.title}]: ${inventory[cat.id]}`;
+      }
     });
     return combined || "___________";
   };
@@ -317,17 +320,51 @@ function App() {
                 <h1>{activeCategory.title}</h1>
               </div>
 
-              <p style={styles.instruction}>
-                Who or what comes to mind? List them below. <br/>
-                <em>(This list will be auto-filled into your prayer).</em>
-              </p>
+              {/* SPECIAL LAYOUT FOR WORD CURSES */}
+              {activeCategory.id === 'word_curses' ? (
+                <>
+                  <p style={styles.instruction}>
+                    <strong>The Lie:</strong> List the negative words spoken over you.<br/>
+                    <strong>The Truth:</strong> List the scripture/truth that breaks that lie.
+                  </p>
+                  
+                  <div style={{display: 'flex', gap: '20px', flexDirection: 'column'}}>
+                     <div>
+                       <label style={{fontWeight:'bold', display:'block', marginBottom:'5px', color:'#ef4444'}}>THE LIE (CURSE)</label>
+                       <textarea
+                        style={{...styles.textArea, height: '150px', borderColor: '#fecaca'}}
+                        placeholder="e.g. You will never succeed..."
+                        value={inventory['word_curses'] || ''}
+                        onChange={(e) => updateInventory('word_curses', e.target.value)}
+                      />
+                     </div>
+                     <div>
+                       <label style={{fontWeight:'bold', display:'block', marginBottom:'5px', color:'#10b981'}}>THE TRUTH (SCRIPTURE)</label>
+                       <textarea
+                        style={{...styles.textArea, height: '150px', borderColor: '#a7f3d0'}}
+                        placeholder="e.g. I can do all things through Christ..."
+                        value={inventory['word_curses_truth'] || ''}
+                        onChange={(e) => updateInventory('word_curses_truth', e.target.value)}
+                      />
+                     </div>
+                  </div>
+                </>
+              ) : (
+                // STANDARD LAYOUT FOR ALL OTHER CATEGORIES
+                <>
+                  <p style={styles.instruction}>
+                    Who or what comes to mind? List them below. <br/>
+                    <em>(This list will be auto-filled into your prayer).</em>
+                  </p>
 
-              <textarea
-                style={styles.textArea}
-                placeholder={activeCategory.placeholder}
-                value={inventory[activeCategory.id] || ''}
-                onChange={(e) => updateInventory(activeCategory.id, e.target.value)}
-              />
+                  <textarea
+                    style={styles.textArea}
+                    placeholder={activeCategory.placeholder}
+                    value={inventory[activeCategory.id] || ''}
+                    onChange={(e) => updateInventory(activeCategory.id, e.target.value)}
+                  />
+                </>
+              )}
               
               <div style={styles.saveIndicator}>
                 {inventory[activeCategory.id] ? <span style={{color:'#10b981'}}>Saved to Device ✓</span> : 'Start typing...'}
@@ -380,41 +417,9 @@ function App() {
   }
 
   // ------------------------------------------------
-  // VIEW: SETTINGS
-  // ------------------------------------------------
-  if (view === 'SETTINGS') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Inter, sans-serif' }}>
-        <header style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', alignItems: 'center' }}>
-           <button onClick={() => setView('DASHBOARD')} style={{ background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold' }}>&larr; Back</button>
-           <h2 style={{ margin: 0, fontSize: '18px', fontFamily: 'Georgia, serif' }}>App Settings</h2>
-        </header>
-        <main style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center', padding: '20px' }}>
-           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
-             <h3>Data Management</h3>
-             <p style={{ color: '#666', marginBottom: '20px' }}>Clear all saved lists and reset the app. (Irreversible)</p>
-             <button onClick={() => {
-                if (window.confirm("Are you sure? This will delete all your lists.")) {
-                  localStorage.removeItem('freedom_inventory');
-                  localStorage.removeItem('freedom_issues');
-                  // We clear state manually to update UI immediately
-                  setInventory({});
-                  setIssues([]);
-                  alert("Data Cleared.");
-                  setView('LOGIN');
-                }
-             }} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Reset All Data</button>
-           </div>
-           <br />
-           <button onClick={() => setView('LOGIN')} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '10px' }}>🔒 Logout</button>
-        </main>
-      </div>
-    );
-  }
-
-  // ------------------------------------------------
   // VIEW: PRAYER ACTIVE (THE ENGINE)
   // ------------------------------------------------
+  if (view === 'PRAYER_ACTIVE') {
   return (
     <div style={styles.layout}>
       <div style={styles.prayerContainer}>
@@ -538,6 +543,15 @@ function App() {
              <p>Heavenly Father, I come to you in Jesus’ name... I ask for your grace to help me deny myself, die to myself, be fully led by your Spirit.</p>
              <p>I repent of my sins, I forgive each person who has hurt me, and I release all judgments against them:</p>
              <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
+             <p>And I break all unholy soul ties I have with any person:</p>
+             <div style={styles.variableBlock}>{getList('soul_ties') || "(List any soul ties here)"}</div>
+             
+             <p><strong>Renewing My Mind:</strong></p>
+             <p>Lord, renew my mind to believe who you say I am in the Bible. I declare these truths over my life:</p>
+             <div style={{...styles.variableBlock, borderColor: '#10b981', backgroundColor: '#ecfdf5', color: '#064e3b'}}>
+               {prayerMode === 'OTHERS' ? "____________________" : (inventory['word_curses_truth'] || "(Go to Inventory > Word Curses to add your Scriptures)")}
+             </div>
+
              <p>I claim Jesus’ blood over all our sins, and I command all unholy spirits to leave us now! Go, in Jesus’ name!</p>
              <p>I pray all of this in the Holy Name of Jesus. Amen.</p>
            </div>
@@ -546,6 +560,41 @@ function App() {
       </div>
     </div>
   );
+  }
+
+  // ------------------------------------------------
+  // VIEW: SETTINGS
+  // ------------------------------------------------
+  if (view === 'SETTINGS') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Inter, sans-serif' }}>
+        <header style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', alignItems: 'center' }}>
+           <button onClick={() => setView('DASHBOARD')} style={{ background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold' }}>&larr; Back</button>
+           <h2 style={{ margin: 0, fontSize: '18px', fontFamily: 'Georgia, serif' }}>App Settings</h2>
+        </header>
+        <main style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center', padding: '20px' }}>
+           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
+             <h3>Data Management</h3>
+             <p style={{ color: '#666', marginBottom: '20px' }}>Clear all saved lists and reset the app. (Irreversible)</p>
+             <button onClick={() => {
+                if (window.confirm("Are you sure? This will delete all your lists.")) {
+                  localStorage.removeItem('freedom_inventory');
+                  localStorage.removeItem('freedom_issues');
+                  setInventory({});
+                  setIssues([]);
+                  alert("Data Cleared.");
+                  setView('LOGIN');
+                }
+             }} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Reset All Data</button>
+           </div>
+           <br />
+           <button onClick={() => setView('LOGIN')} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '10px' }}>🔒 Logout</button>
+        </main>
+      </div>
+    );
+  }
+  
+  return null; // Should not reach
 }
 
 // ------------------------------------------------
@@ -578,43 +627,4 @@ const styles: { [key: string]: React.CSSProperties } = {
   inlineInput: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', marginLeft: '10px', width: '200px' },
   textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
   
-  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
-  btnSecondary: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
-  
-  btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px', padding: '10px' },
-  backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '10px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px', padding: '10px' },
-  editBtn: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
-
-  // List Items
-  catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px', borderBottom: '1px solid #f3f4f6' },
-  catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
-  catNum: { display: 'inline-block', width: '30px', color: '#9ca3af', fontSize: '12px' },
-  issueRow: { backgroundColor: 'white', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', marginBottom: '10px' },
-
-  // Prayer Room Styles
-  prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
-  prayerHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
-  prayerText: { fontSize: '18px', lineHeight: '1.8', color: '#1f2937', textAlign: 'left' },
-  divider: { margin: '30px 0', border: 'none', borderTop: '1px solid #e5e7eb' },
-  variableBlock: { backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '15px', margin: '15px 0', color: '#1e3a8a', whiteSpace: 'pre-wrap', borderRadius: '4px' },
-  variableBlockBlank: { backgroundColor: '#fff', border: '1px dashed #ccc', padding: '15px', margin: '15px 0', color: '#999', borderRadius: '4px' },
-  nameInputBlock: { backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #e5e7eb', textAlign: 'center' },
-
-  // Toggle
-  toggleContainer: { display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' },
-  toggle: { padding: '8px 16px', border: 'none', backgroundColor: 'transparent', color: '#6b7280', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px' },
-  toggleActive: { padding: '8px 16px', border: 'none', backgroundColor: 'white', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
-
-  // Typography
-  serifTitle: { fontFamily: 'Georgia, serif', color: '#111827', margin: 0 },
-  bigTitle: { fontFamily: 'Georgia, serif', fontSize: '32px', color: '#111827', marginBottom: '10px' },
-  subtitle: { color: '#6b7280', fontSize: '16px' },
-  textGray: { color: '#6b7280', marginBottom: '15px', fontSize: '14px' },
-  tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px', display: 'inline-block' },
-  instruction: { fontSize: '16px', color: '#4b5563', marginBottom: '20px', lineHeight: '1.5' },
-  stepBadgeActive: { display: 'block', fontSize: '24px', color: '#4f46e5', fontWeight: 'bold', marginBottom: '10px' },
-  check: { color: '#10b981', marginLeft: '8px', fontWeight: 'bold' },
-  saveIndicator: { textAlign: 'right', marginTop: '10px', fontSize: '12px', fontWeight: 'bold' }
-};
-
-export default App;
+  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%',
