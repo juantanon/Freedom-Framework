@@ -124,7 +124,7 @@ function App() {
     const others = CATEGORIES.filter(c => !mainKeys.includes(c.id));
     let combined = "";
     others.forEach(cat => {
-      // For Word Curses, we only want the LIES (the standard inventory key), not the Truths
+      // For Word Curses, we include the LIES in the Freedom Prayer list
       if (cat.id === 'word_curses' && inventory['word_curses']) {
          combined += `\n• [Word Curses]: ${inventory['word_curses']}`;
       }
@@ -546,10 +546,17 @@ function App() {
              <p>And I break all unholy soul ties I have with any person:</p>
              <div style={styles.variableBlock}>{getList('soul_ties') || "(List any soul ties here)"}</div>
              
+             {/* NEW SECTION: Breaking Words */}
+             <p><strong>Breaking Curses:</strong></p>
+             <p>I break all curses, seals, spells, hexes, and word curses either spoken over any of us or that have been written or texted. Specifically, I break these words spoken over me:</p>
+             <div style={{...styles.variableBlock, borderColor: '#ef4444', backgroundColor: '#fef2f2', color: '#7f1d1d'}}>
+               {prayerMode === 'OTHERS' ? "____________________" : (inventory['word_curses'] || "(Go to Inventory > Word Curses to add the Lies)")}
+             </div>
+             
              <p><strong>Renewing My Mind:</strong></p>
              <p>Lord, renew my mind to believe who you say I am in the Bible. I declare these truths over my life:</p>
              <div style={{...styles.variableBlock, borderColor: '#10b981', backgroundColor: '#ecfdf5', color: '#064e3b'}}>
-               {prayerMode === 'OTHERS' ? "____________________" : (inventory['word_curses_truth'] || "(Go to Inventory > Word Curses to add your Scriptures)")}
+               {prayerMode === 'OTHERS' ? "____________________" : (inventory['word_curses_truth'] || "(Go to Inventory > Word Curses to add the Scriptures)")}
              </div>
 
              <p>I claim Jesus’ blood over all our sins, and I command all unholy spirits to leave us now! Go, in Jesus’ name!</p>
