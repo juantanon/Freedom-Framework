@@ -1,4 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
+
+// ------------------------------------------------
+// 1. YOUR FIREBASE KEYS (PASTE THEM HERE)
+// ------------------------------------------------
+const firebaseConfig = {
+  apiKey: "AIzaSyD9-tne9mI-SbFABDzoXjMWzYKO6kSoCIU",
+  authDomain: "freedom-framework-c27a0.firebaseapp.com",
+  projectId: "freedom-framework-c27a0",
+  storageBucket: "freedom-framework-c27a0.firebasestorage.app",
+  messagingSenderId: "312241741660",
+  appId: "1:312241741660:web:b7b4efc475da1cd5f9eb99"
+};
+
+// Initialize Firebase Cloud Database
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+// We create one secure "document" to hold all your personal lists
+const userDocRef = doc(db, 'freedom_framework', 'my_personal_data'); 
 
 // ------------------------------------------------
 // DATA TYPES
@@ -60,33 +80,45 @@ function App() {
   // Prayer Mode State
   const [prayerMode, setPrayerMode] = useState<'SELF' | 'OTHERS'>('SELF');
   const [lovedOneName, setLovedOneName] = useState('');
-  const [prayerTarget, setPrayerTarget] = useState(''); // Specific issue(s) being prayed for
+  const [prayerTarget, setPrayerTarget] = useState(''); 
   
-  // DATA: Inventory (Phase 2)
+  // DATA
   const [inventory, setInventory] = useState<Record<string, string>>({});
-  
-  // DATA: Issues (Phase 1)
   const [issues, setIssues] = useState<Issue[]>([]);
   const [newIssueText, setNewIssueText] = useState('');
   const [newIssueIntensity, setNewIssueIntensity] = useState(5);
 
   // ------------------------------------------------
-  // DATA PERSISTENCE (The "Vault")
+  // FIREBASE CLOUD SYNC
   // ------------------------------------------------
   useEffect(() => {
-    // Load Inventory
-    const savedInv = localStorage.getItem('freedom_inventory');
-    if (savedInv) setInventory(JSON.parse(savedInv));
-
-    // Load Issues
-    const savedIssues = localStorage.getItem('freedom_issues');
-    if (savedIssues) setIssues(JSON.parse(savedIssues));
+    // This listens to the Cloud Database in real-time
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const cloudData = docSnap.data();
+        if (cloudData.inventory) setInventory(cloudData.inventory);
+        if (cloudData.issues) setIssues(cloudData.issues);
+      }
+    });
+    
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
+
+  // Save to Cloud helper
+  const saveToCloud = async (newInventory: Record<string, string>, newIssues: Issue[]) => {
+    try {
+      await setDoc(userDocRef, { inventory: newInventory, issues: newIssues }, { merge: true });
+    } catch (error) {
+      console.error("Error saving to cloud:", error);
+      alert("Error saving to cloud. Check your Firebase settings and rules.");
+    }
+  };
 
   const updateInventory = (key: string, text: string) => {
     const newInventory = { ...inventory, [key]: text };
-    setInventory(newInventory);
-    localStorage.setItem('freedom_inventory', JSON.stringify(newInventory));
+    setInventory(newInventory); // Update screen immediately
+    saveToCloud(newInventory, issues); // Sync to cloud in background
   };
 
   const addIssue = () => {
@@ -99,7 +131,7 @@ function App() {
     };
     const updatedIssues = [newIssue, ...issues];
     setIssues(updatedIssues);
-    localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
+    saveToCloud(inventory, updatedIssues);
     setNewIssueText('');
     setNewIssueIntensity(5);
   };
@@ -113,26 +145,23 @@ function App() {
       return issue;
     });
     setIssues(updatedIssues);
-    localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
+    saveToCloud(inventory, updatedIssues);
   };
 
   const deleteIssue = (id: number) => {
     const updatedIssues = issues.filter(i => i.id !== id);
     setIssues(updatedIssues);
-    localStorage.setItem('freedom_issues', JSON.stringify(updatedIssues));
+    saveToCloud(inventory, updatedIssues);
   };
   
-  // Trigger SIMPLIFIED prayer for a specific issue
   const startSimplifiedPrayer = (issueText: string) => {
     setPrayerTarget(issueText);
     setActivePrayer('SIMPLIFIED'); 
     setView('PRAYER_ACTIVE');
   };
 
-  // Trigger SIMPLIFIED prayer for ALL issues
   const startAllIssuesPrayer = () => {
     if (issues.length === 0) return;
-    // Combine all issue texts into one string
     const combinedIssues = issues.map(i => i.text).join(', ');
     setPrayerTarget(combinedIssues);
     setActivePrayer('SIMPLIFIED');
@@ -156,7 +185,6 @@ function App() {
     const others = CATEGORIES.filter(c => !mainKeys.includes(c.id));
     let combined = "";
     others.forEach(cat => {
-      // For Word Curses, we include the LIES in the Freedom Prayer list
       if (cat.id === 'word_curses' && inventory['word_curses']) {
          combined += `\n• [Word Curses]: ${inventory['word_curses']}`;
       }
@@ -173,11 +201,7 @@ function App() {
     return "my issues";
   };
   
-  // Helper to determine singular/plural for the prayer command
-  const getSpiritLabel = () => {
-    return prayerTarget.includes(',') ? "spirits" : "spirit";
-  };
-
+  const getSpiritLabel = () => prayerTarget.includes(',') ? "spirits" : "spirit";
   const getName = () => prayerMode === 'OTHERS' && lovedOneName ? lovedOneName : "me";
   const getHeShe = () => "he/she"; 
   const getHimHer = () => "him/her";
@@ -303,7 +327,7 @@ function App() {
             </div>
 
             <div style={{marginTop: '40px', textAlign: 'left'}}>
-              <h3>Recent Issues</h3>
+              <h3>Recent Issues (Cloud Synced ☁️)</h3>
               
               {/* PRAY FOR ALL BUTTON */}
               {issues.length > 1 && (
@@ -466,7 +490,7 @@ function App() {
               )}
               
               <div style={styles.saveIndicator}>
-                {inventory[activeCategory.id] ? <span style={{color:'#10b981'}}>Saved to Device ✓</span> : 'Start typing...'}
+                {inventory[activeCategory.id] ? <span style={{color:'#10b981'}}>Saved to Cloud ☁️ ✓</span> : 'Start typing...'}
               </div>
             </div>
           )}
@@ -724,109 +748,4 @@ function App() {
            <button onClick={() => setView('DASHBOARD')} style={{ background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold' }}>&larr; Back</button>
            <h2 style={{ margin: 0, fontSize: '18px', fontFamily: 'Georgia, serif' }}>App Settings</h2>
         </header>
-        <main style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center', padding: '20px' }}>
-           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
-             <h3>Data Management</h3>
-             <p style={{ color: '#666', marginBottom: '20px' }}>Clear all saved lists and reset the app. (Irreversible)</p>
-             <button onClick={() => {
-                if (window.confirm("Are you sure? This will delete all your lists.")) {
-                  localStorage.removeItem('freedom_inventory');
-                  localStorage.removeItem('freedom_issues');
-                  setInventory({});
-                  setIssues([]);
-                  alert("Data Cleared.");
-                  setView('LOGIN');
-                }
-             }} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Reset All Data</button>
-           </div>
-           <br />
-           <button onClick={() => setView('LOGIN')} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '10px' }}>🔒 Logout</button>
-        </main>
-      </div>
-    );
-  }
-  
-  return null; // Should not reach
-}
-
-// ------------------------------------------------
-// STYLES
-// ------------------------------------------------
-const styles: { [key: string]: React.CSSProperties } = {
-  // Layouts
-  centerContainer: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6' },
-  layout: { display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Inter, sans-serif' },
-  header: { padding: '20px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', alignItems: 'center', backgroundColor: '#fff', position: 'sticky', top: 0, zIndex: 10 },
-  main: { maxWidth: '900px', margin: '20px auto', textAlign: 'center', padding: '20px', width: '100%' },
-  
-  // Sidebar
-  sidebar: { width: '300px', backgroundColor: '#f8f9fa', borderRight: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 20 },
-  scrollList: { overflowY: 'auto', flex: 1, marginTop: '20px' },
-  sidebarTitle: { fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' },
-  
-  // Content Logic
-  mainContent: { flex: 1, padding: '20px', backgroundColor: '#fff', minHeight: '100vh', marginLeft: '0' }, 
-  workArea: { maxWidth: '700px', margin: '0 auto', paddingBottom: '100px' }, 
-  workHeader: { marginBottom: '20px' },
-  
-  // Components
-  card: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', width: '100%', maxWidth: '300px', border: '1px solid #eee', margin: '10px' },
-  cardActive: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', border: '2px solid #4f46e5', width: '100%', maxWidth: '300px', boxShadow: '0 4px 15px rgba(79, 70, 229, 0.1)', margin: '10px' },
-  grid: { display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' },
-  
-  // Inputs & Buttons
-  input: { width: '100%', padding: '16px', margin: '15px 0', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center' },
-  selectInput: { width: '100%', padding: '16px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center', backgroundColor: 'white' },
-  miniSelect: { padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' },
-  inlineInput: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', marginLeft: '10px', width: '200px' },
-  textArea: { width: '100%', height: '300px', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '16px', fontFamily: 'inherit', lineHeight: '1.5', resize: 'none', backgroundColor: '#fafafa' },
-  
-  btnPrimary: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%', marginTop: '10px', minHeight: '44px' },
-  btnGrand: { backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '20px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', width: '100%', marginBottom: '30px', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)' },
-  btnSecondary: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%', marginTop: '10px', minHeight: '44px' },
-  btnSmall: { backgroundColor: '#4f46e5', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
-  
-  btnText: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px', padding: '10px' },
-  backBtn: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', marginBottom: '10px', textAlign: 'left', fontWeight: 'bold', fontSize: '16px', padding: '10px' },
-  editBtn: { backgroundColor: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' },
-
-  // List Items
-  catBtn: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '8px', color: '#374151', fontSize: '14px', borderBottom: '1px solid #f3f4f6' },
-  catBtnActive: { display: 'block', width: '100%', textAlign: 'left', padding: '16px', border: 'none', backgroundColor: '#e0e7ff', color: '#4f46e5', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' },
-  catNum: { display: 'inline-block', width: '30px', color: '#9ca3af', fontSize: '12px' },
-  
-  // Issue Tracker Styles
-  issueRow: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', marginBottom: '15px' },
-  trackerGrid: { display: 'flex', gap: '20px', marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px' },
-  trackerItem: { flex: 1, textAlign: 'center' as const },
-  trackerLabel: { display: 'block', fontSize: '12px', textTransform: 'uppercase' as const, color: '#9ca3af', marginBottom: '5px', fontWeight: 'bold' },
-  trackerScore: { fontSize: '24px', fontWeight: 'bold', color: '#4f46e5' },
-  trackerScoreUpdated: { fontSize: '24px', fontWeight: 'bold', color: '#10b981' },
-
-  // Prayer Room Styles
-  prayerContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
-  prayerHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
-  prayerText: { fontSize: '18px', lineHeight: '1.8', color: '#1f2937', textAlign: 'left' },
-  divider: { margin: '30px 0', border: 'none', borderTop: '1px solid #e5e7eb' },
-  variableBlock: { backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '15px', margin: '15px 0', color: '#1e3a8a', whiteSpace: 'pre-wrap', borderRadius: '4px' },
-  variableBlockBlank: { backgroundColor: '#fff', border: '1px dashed #ccc', padding: '15px', margin: '15px 0', color: '#999', borderRadius: '4px' },
-  nameInputBlock: { backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #e5e7eb', textAlign: 'center' },
-
-  // Toggle
-  toggleContainer: { display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' },
-  toggle: { padding: '8px 16px', border: 'none', backgroundColor: 'transparent', color: '#6b7280', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px' },
-  toggleActive: { padding: '8px 16px', border: 'none', backgroundColor: 'white', color: '#4f46e5', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
-
-  // Typography
-  serifTitle: { fontFamily: 'Georgia, serif', color: '#111827', margin: 0 },
-  bigTitle: { fontFamily: 'Georgia, serif', fontSize: '32px', color: '#111827', marginBottom: '10px' },
-  subtitle: { color: '#6b7280', fontSize: '16px' },
-  textGray: { color: '#6b7280', marginBottom: '15px', fontSize: '14px' },
-  tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px', display: 'inline-block' },
-  instruction: { fontSize: '16px', color: '#4b5563', marginBottom: '20px', lineHeight: '1.5' },
-  stepBadgeActive: { display: 'block', fontSize: '24px', color: '#4f46e5', fontWeight: 'bold', marginBottom: '10px' },
-  check: { color: '#10b981', marginLeft: '8px', fontWeight: 'bold' },
-  saveIndicator: { textAlign: 'right', marginTop: '10px', fontSize: '12px', fontWeight: 'bold' }
-};
-
-export default App;
+        <main style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center', padding: '20
