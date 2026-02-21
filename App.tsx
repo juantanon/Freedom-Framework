@@ -3,15 +3,15 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // ------------------------------------------------
-// 1. YOUR FIREBASE KEYS (PASTE THEM HERE)
+// 1. YOUR FIREBASE KEYS 
 // ------------------------------------------------
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY_HERE",
-  authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
-  projectId: "PASTE_YOUR_PROJECT_ID_HERE",
-  storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
-  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_YOUR_APP_ID_HERE"
+  apiKey: "AIzaSyD9-tne9mI-SbFABDzoXjMWzYKO6kSoCIU",
+  authDomain: "freedom-framework-c27a0.firebaseapp.com",
+  projectId: "freedom-framework-c27a0",
+  storageBucket: "freedom-framework-c27a0.firebasestorage.app",
+  messagingSenderId: "312241741660",
+  appId: "1:312241741660:web:b7b4efc475da1cd5f9eb99"
 };
 
 // Initialize Firebase Cloud Database
@@ -72,7 +72,11 @@ function App() {
   // ------------------------------------------------
   // STATE
   // ------------------------------------------------
-  const [view, setView] = useState<'LOGIN' | 'DASHBOARD' | 'IDENTIFY' | 'INVENTORY' | 'PRAYER_MENU' | 'PRAYER_ACTIVE' | 'SETTINGS'>('LOGIN');
+  // NEW: Check memory to see if we are already logged in!
+  const [view, setView] = useState<'LOGIN' | 'DASHBOARD' | 'IDENTIFY' | 'INVENTORY' | 'PRAYER_MENU' | 'PRAYER_ACTIVE' | 'SETTINGS'>(() => {
+    return sessionStorage.getItem('freedom_logged_in') === 'true' ? 'DASHBOARD' : 'LOGIN';
+  });
+  
   const [passcode, setPasscode] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryData | null>(null);
   const [activePrayer, setActivePrayer] = useState<string>('');
@@ -170,6 +174,15 @@ function App() {
   
   const SECRET_CODE = "1234";
 
+  const handleLogin = () => {
+    if (passcode === SECRET_CODE) {
+      sessionStorage.setItem('freedom_logged_in', 'true'); // Save VIP stamp
+      setView('DASHBOARD');
+    } else {
+      alert('Wrong code');
+    }
+  };
+
   // ------------------------------------------------
   // HELPERS FOR PRAYER INJECTION
   // ------------------------------------------------
@@ -223,7 +236,7 @@ function App() {
             placeholder="••••"
           />
           <button 
-            onClick={() => passcode === SECRET_CODE ? setView('DASHBOARD') : alert('Wrong code')}
+            onClick={handleLogin}
             style={styles.btnPrimary}
           >
             Enter
@@ -758,12 +771,16 @@ function App() {
                   setInventory({});
                   setIssues([]);
                   alert("Data Cleared from Cloud.");
+                  sessionStorage.removeItem('freedom_logged_in');
                   setView('LOGIN');
                 }
              }} style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '16px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Reset All Cloud Data</button>
            </div>
            <br />
-           <button onClick={() => setView('LOGIN')} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '10px' }}>🔒 Logout</button>
+           <button onClick={() => {
+              sessionStorage.removeItem('freedom_logged_in');
+              setView('LOGIN');
+           }} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '10px' }}>🔒 Logout</button>
         </main>
       </div>
     );
