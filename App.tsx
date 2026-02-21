@@ -62,13 +62,13 @@ interface Issue {
 }
 
 const CATEGORIES: CategoryData[] = [
-  { id: 'parent_child', title: 'Parent-Child Relationship', videoNum: '#1', placeholder: 'List specific wounds from father or mother...' },
+  { id: 'parent_child', title: 'Parent-Child', videoNum: '#1', placeholder: 'List specific wounds from father or mother...' },
   { id: 'unforgiveness', title: 'Unforgiveness', videoNum: '#2', placeholder: 'List names of people to forgive...' },
   { id: 'sexual_sin', title: 'Sexual Sin', videoNum: '#3', placeholder: 'List names/events to renounce...' },
   { id: 'generational', title: 'Generational Sin', videoNum: '#4', placeholder: 'List family patterns (divorce, anger, etc)...' },
   { id: 'occult', title: 'Occult / New Age', videoNum: '#5', placeholder: 'List activities (horoscopes, lodges, etc)...' },
   { id: 'word_curses', title: 'Word Curses', videoNum: '#6', placeholder: 'List negative words spoken over you...' },
-  { id: 'vows', title: 'Inner Vows / Covenants', videoNum: '#7', placeholder: 'List vows ("I will never...") to break...' },
+  { id: 'vows', title: 'Inner Vows', videoNum: '#7', placeholder: 'List vows ("I will never...") to break...' },
   { id: 'idolatry', title: 'Idolatry', videoNum: '#8', placeholder: 'List things put before God...' },
   { id: 'pride', title: 'Pride', videoNum: '#9', placeholder: 'List areas of self-reliance...' },
   { id: 'abuse', title: 'Abuse / Trauma', videoNum: '#10', placeholder: 'List specific traumatic events...' },
@@ -80,6 +80,22 @@ const CATEGORIES: CategoryData[] = [
   { id: 'influencers', title: 'Bad Influencers', videoNum: '#17', placeholder: 'List people who led you astray...' },
   { id: 'infirmity', title: 'Infirmity / Sickness', videoNum: '#18', placeholder: 'List physical ailments to pray over...' },
 ];
+
+// ------------------------------------------------
+// FAST ENTRY CHECKLISTS (NEW)
+// ------------------------------------------------
+const QUICK_CHIPS: Partial<Record<CategoryKey, string[]>> = {
+  parent_child: ["Father", "Mother", "Step-Father", "Step-Mother", "Adoptive Parents"],
+  unforgiveness: ["Father", "Mother", "Spouse", "Ex-Spouse", "Brother", "Sister", "Boss", "Friend", "Myself", "God"],
+  sexual_sin: ["Pornography", "Fornication", "Adultery", "Masturbation", "Lust", "Fantasy"],
+  generational: ["Anger", "Divorce", "Addiction", "Poverty", "Depression", "Fear", "Heart Disease", "Cancer"],
+  occult: ["Horoscopes", "Ouija Board", "Tarot Cards", "Psychics/Mediums", "Seances", "Crystals", "New Age", "Freemasonry"],
+  vows: ["'I will never...'", "'I must always...'", "'I am worthless'", "'I can't trust anyone'"],
+  idolatry: ["Money", "Career", "My Spouse", "My Children", "Entertainment", "Comfort", "Status/Image"],
+  pride: ["Control", "Perfectionism", "Stubbornness", "Vanity", "Self-Righteousness", "Independence from God"],
+  addictions: ["Alcohol", "Drugs", "Nicotine", "Food/Sugar", "Social Media", "Video Games", "Gambling"],
+  infirmity: ["Chronic Pain", "Migraines", "Autoimmune", "Fatigue", "Anxiety/Panic", "Insomnia"]
+};
 
 function App() {
   const [view, setView] = useState<'LOGIN' | 'DASHBOARD' | 'IDENTIFY' | 'INVENTORY' | 'PRAYER_MENU' | 'PRAYER_ACTIVE' | 'SETTINGS'>(() => {
@@ -122,6 +138,20 @@ function App() {
     const newInventory = { ...inventory, [key]: text };
     setInventory(newInventory); 
     saveToCloud(newInventory, issues); 
+  };
+
+  // Toggle Chip Function
+  const toggleChecklistItem = (key: string, item: string) => {
+    const currentText = inventory[key] || '';
+    let itemsArray = currentText.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    
+    if (itemsArray.includes(item)) {
+      itemsArray = itemsArray.filter(i => i !== item); // Remove it
+    } else {
+      itemsArray.push(item); // Add it
+    }
+    
+    updateInventory(key, itemsArray.join(', '));
   };
 
   const addIssue = () => {
@@ -231,12 +261,7 @@ function App() {
             style={styles.input}
             placeholder="••••"
           />
-          <button 
-            onClick={handleLogin}
-            style={styles.btnPrimary}
-          >
-            Enter
-          </button>
+          <button onClick={handleLogin} style={styles.btnPrimary}>Enter</button>
         </div>
       </div>
     );
@@ -262,27 +287,21 @@ function App() {
               <span style={styles.stepBadgeActive}>01</span>
               <h3>Identify</h3>
               <p style={styles.textGray}>Log current burdens & tracking.</p>
-              <button onClick={() => setView('IDENTIFY')} style={styles.btnPrimary}>
-                Open Issue Tracker &rarr;
-              </button>
+              <button onClick={() => setView('IDENTIFY')} style={styles.btnPrimary}>Open Issue Tracker &rarr;</button>
             </div>
 
             <div style={styles.cardActive}>
               <span style={styles.stepBadgeActive}>02</span>
               <h3>Inventory (Roots)</h3>
               <p style={styles.textGray}>The 18-Category Deep Clean.</p>
-              <button onClick={() => setView('INVENTORY')} style={styles.btnPrimary}>
-                Open Inventory &rarr;
-              </button>
+              <button onClick={() => setView('INVENTORY')} style={styles.btnPrimary}>Open Inventory &rarr;</button>
             </div>
 
              <div style={styles.cardActive}>
               <span style={styles.stepBadgeActive}>03</span>
               <h3>Prayer Room</h3>
               <p style={styles.textGray}>Break agreements & find peace.</p>
-              <button onClick={() => setView('PRAYER_MENU')} style={styles.btnPrimary}>
-                Enter Prayer Room &rarr;
-              </button>
+              <button onClick={() => setView('PRAYER_MENU')} style={styles.btnPrimary}>Enter Prayer Room &rarr;</button>
             </div>
           </div>
         </main>
@@ -393,7 +412,7 @@ function App() {
   }
 
   // ------------------------------------------------
-  // VIEW: INVENTORY (MOBILE RESPONSIVE VERSION)
+  // VIEW: INVENTORY 
   // ------------------------------------------------
   if (view === 'INVENTORY') {
     return (
@@ -430,6 +449,7 @@ function App() {
                 <h1>{activeCategory.title}</h1>
               </div>
 
+              {/* SPECIAL LAYOUT FOR WORD CURSES */}
               {activeCategory.id === 'word_curses' ? (
                 <>
                   <p style={styles.instruction}>
@@ -458,11 +478,30 @@ function App() {
                   </div>
                 </>
               ) : (
+                // STANDARD LAYOUT WITH CHECKLISTS
                 <>
                   <p style={styles.instruction}>
-                    Who or what comes to mind? List them below. <br/>
-                    <em>(This list will be auto-filled into your prayer).</em>
+                    Who or what comes to mind? Tap the quick options below, or type your own.
                   </p>
+
+                  {/* QUICK CHIPS CONTAINER */}
+                  {QUICK_CHIPS[activeCategory.id] && (
+                    <div style={styles.chipContainer}>
+                      {QUICK_CHIPS[activeCategory.id]?.map(chipItem => {
+                        const isSelected = (inventory[activeCategory.id] || '').includes(chipItem);
+                        return (
+                          <button 
+                            key={chipItem}
+                            onClick={() => toggleChecklistItem(activeCategory.id, chipItem)}
+                            style={isSelected ? styles.chipActive : styles.chip}
+                          >
+                            {isSelected ? '✓ ' : '+ '} {chipItem}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <textarea
                     style={styles.textArea}
                     placeholder={activeCategory.placeholder}
@@ -668,6 +707,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   card: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', width: '100%', maxWidth: '300px', border: '1px solid #eee', margin: '10px' },
   cardActive: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', border: '2px solid #4f46e5', width: '100%', maxWidth: '300px', boxShadow: '0 4px 15px rgba(79, 70, 229, 0.1)', margin: '10px' },
   grid: { display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' },
+  
+  // New Checklist Chip Styles
+  chipContainer: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '15px' },
+  chip: { padding: '10px 16px', backgroundColor: '#f3f4f6', borderRadius: '20px', fontSize: '14px', cursor: 'pointer', border: '1px solid #e5e7eb', color: '#374151', transition: 'all 0.2s' },
+  chipActive: { padding: '10px 16px', backgroundColor: '#e0e7ff', borderRadius: '20px', fontSize: '14px', cursor: 'pointer', border: '1px solid #4f46e5', color: '#4f46e5', fontWeight: 'bold', transition: 'all 0.2s' },
+  
   input: { width: '100%', padding: '16px', margin: '15px 0', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center' },
   selectInput: { width: '100%', padding: '16px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '18px', textAlign: 'center', backgroundColor: 'white' },
   miniSelect: { padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' },
