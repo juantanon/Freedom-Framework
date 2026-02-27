@@ -665,6 +665,83 @@ function App() {
            </div>
         )}
 
+        {/* --- DAILY PRAYER (PRAYER #3) --- */}
+        {activePrayer === 'DAILY' && (
+           <div style={styles.prayerText}>
+             <h1>Prayer #3: "Final Cleanup"</h1>
+             <p style={styles.textGray}><strong>Instructions:</strong> Pray twice a day (morning and evening) for 30 days. Pray out loud. (after 30 days, use this as a daily prayer)</p>
+             
+             <div style={styles.nameInputBlock}>
+                 <p style={{marginBottom: '10px', fontSize: '14px', color: '#6b7280'}}>Fill in these details to automatically update the prayer below:</p>
+                 <input 
+                   type="text" 
+                   placeholder="Your Spouse's Name..." 
+                   value={inventory['spouse_name'] || ''} 
+                   onChange={(e) => updateInventory('spouse_name', e.target.value)} 
+                   style={styles.inlineInput} 
+                 />
+                 <input 
+                   type="text" 
+                   placeholder="Your Children's Names..." 
+                   value={inventory['children_names'] || ''} 
+                   onChange={(e) => updateInventory('children_names', e.target.value)} 
+                   style={{...styles.inlineInput, marginTop: '10px'}} 
+                 />
+             </div>
+             
+             <hr style={styles.divider}/>
+
+             <p>Heavenly Father, I come to you in Jesus' name, being made one with him through the new covenant in his blood. I ask for your grace to help me deny myself, die to myself, be fully led by your Spirit, and no longer conform to the patterns of this world. And I commit, and remind myself, to always ask you for guidance in every decision I make that I may stay in the center of your will. Help me to be closer to you, diligently pursue you, and take every thought captive through the Word of Christ.</p>
+             
+             <p>Please abundantly provide for me and my family—not only in financial provision, but also in health in both body and relationships with each other. Prosper all that we do and grant us the abundant life your Son has promised us.</p>
+             
+             <p>Watch over and protect my family, and bless all of us to pursue you, to focus on you, to yield to you, to deny ourselves, and bring you glory in all we do. I repent of my sins ("including..." <em>list specific sins you are aware of</em>), I forgive each person who has hurt me, and I release all judgments against them, including:</p>
+             <div style={styles.variableBlock}>{getList('unforgiveness')} <br/><br/> {getList('judgments')}</div>
+             
+             <p>And I break all unholy soul ties I have with any person, including:</p>
+             <div style={styles.variableBlock}>{getList('soul_ties')}</div>
+             
+             <p>On behalf of <strong>{inventory['spouse_name'] || '(spouse)'}</strong>, I repent of his/her sins ("including..." <em>list any specific sins you are aware of</em>) and break all unholy soul ties he/she may have with any person ("including..." <em>list anyone who comes to mind</em>), and on behalf of my children—<strong>{inventory['children_names'] || '(name them)'}</strong>—I repent for each of their sins ("including..." <em>list any specific sins you are aware of</em>) and I break all unholy soul ties they may have with any person as well ("including..." <em>list anyone who comes to mind</em>). I claim Jesus' blood over all our sins, and I command all unholy spirits to leave us now! Go, in Jesus' name!</p>
+
+             <p>I plead the blood of Jesus over any curse or words working against me or my family from anyone in authority, or who carries authority, or even from my own mouth, for which I repent. I ask that those words be voided, and anything recorded in heaven from them be stricken, removed, and all legal rights revoked.</p>
+
+             <p>For each of my family members, I now break, by the authority of Jesus Christ, every curse put upon us. I break all curses, seals, spells, hexes, vexes, and all other demonic bondages, all word curses either spoken over any of us or that have been written or texted, and any other unholy bondages sent against me, my family, or any object we possess. And in the name of Jesus, I command every spirit associated with those curses to be bound, leave, and never return to us.</p>
+
+             <p>In the name of Jesus and through his blood, I bind and sever every cord of every unholy spirit over our home. I render every unholy spirit inactive. I declare you are cut off from your communication. I declare confusion into your camp, I declare all your works ineffective against me and my family, and I command you out of my home in Jesus' name.</p>
+
+             <p>For both me and each of my family members <strong>{inventory['children_names'] ? `(${inventory['children_names']})` : '(name them)'}</strong>, in the name of Jesus, I renounce and bind every demonic stronghold at work in our lives ("including..." <em>list any sin strongholds God places on your heart, and include all Strongman spirits marked on List 16: Additional Sins and Issues that still remain in your life</em>):</p>
+             <div style={styles.variableBlock}>{getList('additional_sins')}</div>
+             
+             <p>I bind every named and unnamed spirit under each of these strongholds spirits ("including..." <em>list all junior spirits marked on List 16: Additional Sins and Issues that still remain in your life</em>). I declare each spirit inactive in our lives and I declare all their works ineffective. And now, I speak to each of you spirits: In Jesus's name, I break every legal right you have to remain, and I command you to leave now and never return.</p>
+
+             <p><em>(if you completed the Word Curses grid above)</em><br/>
+             And Lord, help me renew my mind to believe who you say I am in the Bible: <em>(read each scripture statement from your Word Curses grid)</em>. I receive these truths as identity, not something I'm trying to become.</p>
+             <div style={{...styles.variableBlock, backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#064e3b'}}>
+               <strong>My Word Curses to turn into Scripture:</strong><br/>
+               {getList('word_curses')}
+             </div>
+
+             <p><em>(if you have had a long-term chronic issue like addiction, pain or any other malady)</em><br/>
+             And Lord, I repent of my identity of the following chronic issues:</p>
+             <div style={styles.variableBlock}>{getList('infirmity')}</div>
+             <p>and in the name of Jesus I command the spirit of these chronic issues to leave and never return. I separate who I am from what I have experienced.</p>
+
+             <p>Lord, I ask that you enforce the freedom which you have promised from sin and that you remove all unholy spirits from my life right now. I also ask you to release healing into my body and those of my family members. Fully restore all that the thief has stolen.</p>
+
+             <p>Lord, I also ask that you remove the memory of all abuses and traumas any of us have experienced—both from my mind and body, and the minds and bodies of each family member. I renounce and rebuke all spirits tied to those abuses and traumas, and I command each of you to leave—go now in Jesus' name!</p>
+
+             <p>And Lord, I ask you to strengthen my memory, cognitive ability, thinking power, and imagination. Help me, also, to remember those things I should remember, and not remember those things I should forget.</p>
+
+             <p>Please bring forth the fruit of your Spirit each day, in me and each member of my family—love, joy, peace, patience, goodness, kindness, gentleness, faithfulness, and self-control. Grant us mercy in all we do and help us to lean on you each day.</p>
+
+             <p>I pray all of this in the Holy Name of Jesus, and through the power of God the Father, and of the Son, and of the Holy Spirit. Amen.</p>
+
+             <div style={{marginTop: '30px', padding: '15px', backgroundColor: '#fef3c7', borderRadius: '8px', border: '1px solid #fde68a'}}>
+               <p style={{color: '#92400e', margin: 0, fontSize: '14px'}}><strong>[Reminder:</strong> once you have completed the thirty days of Prayer #3, return to your Issue Grid (Identify Tab) and rate the intensity of each item. Also, add any additional items you missed but are noticing changes in.]</p>
+             </div>
+           </div>
+        )}
+
         {/* --- SIMPLIFIED PRAYER (SELF & OTHERS) --- */}
         {activePrayer === 'SIMPLIFIED' && (
            <div style={styles.prayerText}>
@@ -750,33 +827,6 @@ function App() {
              <p>“And in Jesus’ name, I now command the spirit of <strong>{getTargetIssue()}</strong> to leave me, immediately. Go now, in Jesus’ name!” <em>(Repeat one more time)</em></p>
              
              <p style={{marginTop: '30px', color: '#6b7280', fontSize: '14px'}}><em>Note: Re-calibrate your intensity level. If it has diminished but not disappeared, keep repeating Step 3. If no change, repeat the entire process.</em></p>
-           </div>
-        )}
-        
-        {/* --- DAILY PRAYER (PRAYER #3) --- */}
-        {activePrayer === 'DAILY' && (
-           <div style={styles.prayerText}>
-             <h1>The Daily Prayer (Prayer #3)</h1>
-             <p>Heavenly Father, I come to you in Jesus’ name, being made one with him through the new covenant in his blood. I ask for your grace to help me deny myself, die to myself, be fully led by your Spirit, and no longer conform to the patterns of this world. And I commit, and remind myself, to always ask you for guidance in every decision I make that I may stay in the center of your will. Help me to be closer to you, diligently pursue you, and take every thought captive through the Word of Christ.</p>
-             <p>Please abundantly provide for me and my family—not only in full financial provision, but also through health in both body and relationships with each other. Prosper all that we do and grant us the abundant life your Son has promised us.</p>
-             <p>Watch over and protect my family, and bless all of us to pursue you, to focus on you, to yield to you, to deny ourselves, and bring you glory in all we do. I repent of my sins, I forgive each person who has hurt me, and I release all judgments against them, including:</p>
-             <div style={styles.variableBlock}>{getList('unforgiveness')}</div>
-             
-             <p>On behalf of my family, I repent of their sins and break all unholy soul ties they may have with any person. I claim Jesus’ blood over all our sins, and I command all unholy spirits to leave us now! Go, in Jesus’ name!</p>
-             
-             <p>I plead the blood of Jesus over any curse or words working against me or my family from anyone in authority, or who carries authority, or even from my own mouth, for which I repent. I ask that those words be voided, and anything recorded in heaven from them be stricken, removed, and all legal rights revoked.</p>
-             
-             <p>For each of my family members, I now break, by the authority of Jesus Christ, every curse put upon us. I break all curses, seals, spells, hexes, vexes, and all other demonic bondages, all word curses either spoken over any of us or that have been written or texted, and any other unholy bondages sent against me, my family, or any object we possess. And in the name of Jesus, I command every spirit associated with those curses to be bound, leave, and never return to us.</p>
-
-             <p>In the name of Jesus and through his blood, I bind and sever every cord of every unholy spirit over our home. I render every unholy spirit inactive. I declare you are cut off from your communication. I declare confusion into your camp, I declare all your works ineffective against me and my family, and I command you out of my home in Jesus’ name.</p>
-             
-             <p>For both me and each of my family members, in the name of Jesus, I renounce and bind every demonic stronghold at work in our lives. I bind every named and unnamed spirit under each of these stronghold spirits. I declare each spirit inactive in our lives and I declare all their works ineffective. And now, I speak to each of you spirits: In Jesus’s name, I break every legal right you have to remain, and I command you to leave now and never return.</p>
-
-             <p>And Lord, I ask you to strengthen my memory, cognitive ability, thinking power, and imagination. Help me, also, to remember those things I should remember, and not remember those things I should forget.</p>
-
-             <p>Please bring forth the fruit of your Spirit each day, in me and each member of my family—love, joy, peace, patience, goodness, kindness, gentleness, faithfulness, and self-control. Grant us mercy in all we do and help us to lean on you each day.</p>
-
-             <p>I pray all of this in the Holy Name of Jesus, and through the power of God the Father, and of the Son, and of the Holy Spirit. Amen.</p>
            </div>
         )}
 
