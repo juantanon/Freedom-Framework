@@ -113,6 +113,7 @@ function App() {
   
   const [prayerMode, setPrayerMode] = useState<'SELF' | 'OTHERS'>('SELF');
   const [lovedOneName, setLovedOneName] = useState('');
+  const [lovedOneIssues, setLovedOneIssues] = useState(''); // NEW: Specific issues for loved ones
   const [prayerTarget, setPrayerTarget] = useState(''); 
   const [nationName, setNationName] = useState('the United States of America');
   const [recoverySin, setRecoverySin] = useState('');
@@ -233,7 +234,12 @@ function App() {
     return combined || "(None listed)";
   };
 
-  const getTargetIssue = () => prayerTarget || (issues.length > 0 ? issues[0].text : "my issues");
+  // UPDATED: Now properly separates targets based on who you are praying for
+  const getTargetIssue = () => {
+    if (prayerMode === 'OTHERS') return lovedOneIssues || "(name the issues)";
+    return prayerTarget || (issues.length > 0 ? issues[0].text : "my issues");
+  };
+
   const getName = () => prayerMode === 'OTHERS' && lovedOneName ? lovedOneName : "(loved one's name)";
   const getHeShe = () => "he/she"; 
   const getHimHer = () => "him/her";
@@ -747,14 +753,19 @@ function App() {
            <div style={styles.prayerText}>
              <h1>Simplified Prayer of Freedom</h1>
              
-             {prayerMode === 'OTHERS' && (
+             {prayerMode === 'OTHERS' ? (
                <div style={styles.nameInputBlock}>
                  <p>Who are you praying for today?</p>
                  <input type="text" placeholder="Enter their name..." value={lovedOneName} onChange={(e) => setLovedOneName(e.target.value)} style={styles.inlineInput} />
+                 
+                 <p style={{marginTop: '15px'}}>What issue(s) are you targeting for them?</p>
+                 <input type="text" placeholder="e.g. sickness, anxiety..." value={lovedOneIssues} onChange={(e) => setLovedOneIssues(e.target.value)} style={{...styles.inlineInput, width: '80%', maxWidth: '400px'}} />
+               </div>
+             ) : (
+               <div style={styles.nameInputBlock}>
+                 <p><strong>Target Issue(s):</strong> {getTargetIssue()}</p>
                </div>
              )}
-             
-             <div style={styles.nameInputBlock}><p><strong>Target Issue(s):</strong> {getTargetIssue()}</p></div>
 
              {prayerMode === 'SELF' ? (
                <>
